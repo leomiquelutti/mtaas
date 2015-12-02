@@ -4,6 +4,7 @@
 // that uses this DLL. This way any other project whose source files include this file see 
 // ENGINE_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
+
 #ifdef ENGINE_EXPORTS
 #define ENGINE_API __declspec(dllexport)
 #else
@@ -18,21 +19,21 @@
 #define N_OUTPUT 2
 #define N_FILES N_INPUT
 
-extern "C" ENGINE_API int process(	int inputc,
-									int outputc,
-									char *input[],
-									char *output[],
-									unsigned int type,
-									int decimation,
-									BOOL robust);
-
-extern "C" JNIEXPORT jint JNICALL Java_com_mt_Engine_process(	JNIEnv *env,
-																jobject this_object,
-																jobjectArray j_input,
-																jobjectArray j_output,
-																jint j_type,
-																jint j_decimation,
-																jboolean j_robust);
+//extern "C" ENGINE_API int process(	int inputc,
+//									int outputc,
+//									char *input[],
+//									char *output[],
+//									unsigned int type,
+//									int decimation,
+//									BOOL robust);
+//
+//extern "C" JNIEXPORT jint JNICALL Java_com_mt_Engine_process(	JNIEnv *env,
+//																jobject this_object,
+//																jobjectArray j_input,
+//																jobjectArray j_output,
+//																jint j_type,
+//																jint j_decimation,
+//																jboolean j_robust);
 
 class CEngineBase {
 public:

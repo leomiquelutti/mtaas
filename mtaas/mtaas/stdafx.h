@@ -18,4 +18,4 @@
 #include "matCUDA.h"
 //#include "Mtu.h"
 #include "MT.h"
-#include "jni.h"
+//#include "jni.h"
