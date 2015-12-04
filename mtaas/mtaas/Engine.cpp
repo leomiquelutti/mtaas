@@ -1,9 +1,8 @@
 //// Engine.cpp : Defines the exported functions for the DLL application.
-////
-//
+
 #include "stdafx.h"
 #include "Engine.h"
-//
+
 //ENGINE_API int process(	int inputc,
 //						int outputc,
 //						char *input[],
@@ -87,6 +86,7 @@
 //	return ret;
 //}
 //
+
 CEngineBase::CEngineBase(	int inputc,
 							int outputc,
 							char *input[],
@@ -113,6 +113,34 @@ CEngineBase::CEngineBase(	int inputc,
 	for(int i = 0; i < m_outputc; i++)
 		std::cout << m_output[i] << std::endl;
 
+}
+
+int CEngine::process_emi()
+{
+	std::cout << "CEngine::process_emi" << std::endl;
+
+	return 0;
+}
+
+int CEngine::process_lmt()
+{
+	std::cout << "CEngine::process_lmt" << std::endl;
+
+	return 0;
+}
+
+int CEngine::process_sio()
+{
+	std::cout << "CEngine::process_sio" << std::endl;
+
+	return 0;
+}
+
+int CEngine::process_mtu()
+{
+	std::cout << "CEngine::process_mtu" << std::endl;
+
+	return 0;
 }
 
 int CEngineBase::process()

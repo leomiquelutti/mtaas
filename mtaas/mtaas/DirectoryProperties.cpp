@@ -83,13 +83,14 @@ void DirectoryProperties::fill_station_names( StationBase *station )
 	}
 }
 
-std::vector<StationBase> DirectoryProperties::initialize_stations()
+std::vector<StationBase> DirectoryProperties::initialize_stations( std::string inputPath )
 {
-	this->numberOfFolders = this->get_number_of_subfolders( this->pathName );
+	DirectoryProperties dirInfo;
+	const size_t numberOfFolders = dirInfo.get_number_of_subfolders( inputPath );
 
-	std::vector<StationBase> station( this->numberOfFolders );
+	std::vector<StationBase> station( numberOfFolders );
 	
-	this->fill_station_names( &station );
+	dirInfo.fill_station_names( &station );
 
 	return station;
 }
@@ -114,8 +115,8 @@ size_t DirectoryProperties::get_number_of_subfolders( std::string inputPath )
 	size_t subfoldersCounter = std::count_if(
         directory_iterator(p),
         directory_iterator(),
-        bind( static_cast<bool(*)(const path&)>(is_directory), 
-        bind( &directory_entry::path, _1 ) ) );
+        boost::lambda::bind( static_cast<bool(*)(const path&)>(is_directory),
+        boost::lambda::bind( &directory_entry::path, _1 ) ) );
 
 	return subfoldersCounter;
 }

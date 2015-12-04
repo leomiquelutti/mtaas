@@ -14,8 +14,10 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <string>
+#include <complex>
+
+typedef std::complex<double> Complex;
 
 #include "matCUDA.h"
-//#include "Mtu.h"
 #include "MT.h"
 //#include "jni.h"

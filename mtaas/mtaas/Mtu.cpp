@@ -1,4 +1,4 @@
-#include "MT.h"
+#include "mtu.h"
 #include "GetDeclination.h"
 
 #include <cctype>
@@ -16,44 +16,39 @@
 using namespace std;
 using namespace matCUDA;
 
-Array<double> MtuExtractor::read_mtu_data( StationBase *Mtu, string input ) 
+void ExtractorMTU::read_time_series( StationBase *station ) 
 {
-	// read first tag - ORIGINAL
-	//ifstream inputTSFile;
-	//inputTSFile.open( input );
-	//if( inputTSFile.good() )
-	//{
-	//	cout << "Reading header data from " << input << endl << endl;
-	//	MtuExtractor::read_TSn_tag( input, Mtu, 0 );
-	//}
-	//else
-	//	cout << "Could not open " << input << endl << endl;
-	//inputTSFile.close();	
+	station->mtu->tbl = station->mtu->read_tbl( string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MATLAB\\MT data processing\\data\\1282407A.TBL") );
+	station->data = station->mtu->read_mtu_data( station, string("G:\\ANP\\parana\\dados_recebidos_141112\\PHASE 5 POINT BY POINT\\02-139\\RAW-BIN\\1327A21B.TS5") );
+	//this->mtu->tbl = station[0].read_tbl( inputTbl1 );
+	//station[0].tbl = station[0].read_tbl( inputTbl1 );
+	//Array<double> data1 = station[0].read_mtu_data( &station[0], inputTSn1 );
+	//Array<double> timeVector1 = station[0].get_mtu_time_vector( &station[0], inputTSn1 );
+	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
+	//
+	//station[0].MtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
+	//station[0].isContinuous = station[0].is_acquisition_continuos( &timeVector1 );
+}
 
+Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, string input ) 
+{
 	ifstream infile( input.c_str(), ios::binary );
 	if ( infile.good() )
     {
-		read_TSn_tag( infile, Mtu, 0 );
+		read_TSn_tag( infile, station, 0 );
     }
 	infile.close();
 	
-	Mtu->numberOfBytes = get_number_of_bytes( input );
-	Mtu->numberOfRecords = Mtu->numberOfBytes / Mtu->recordLength;
-	Mtu->numberOfSamples = Mtu->numberOfBytes / Mtu->recordLength * Mtu->nScansPerRecord;
+	station->mtu->numberOfBytes = get_number_of_bytes( input );
+	station->mtu->numberOfRecords = station->mtu->numberOfBytes / station->mtu->recordLength;
+	station->mtu->numberOfSamples = station->mtu->numberOfBytes / station->mtu->recordLength * station->mtu->nScansPerRecord;
 
-	Array<double> data( (size_t)Mtu->numberOfSamples, (const index_t)Mtu->numberOfChannels );
+	Array<double> data( (size_t)station->mtu->numberOfSamples, (const index_t)station->numberOfChannels );
 
-	//data = new Array<double>( Mtu->numberOfSamples,Mtu->numberOfChannels );
-	//timeVector = new Array<double>( Mtu->numberOfSamples );
-	//
-	// read time series
-	//inputTSFile;
-	//inputTSFile.open( input );
-	//if( inputTSFile.good() )
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
-		get_data( input, &data, Mtu );
+		get_data( input, &data, station );
 	}
 	else
 	{
@@ -62,12 +57,14 @@ Array<double> MtuExtractor::read_mtu_data( StationBase *Mtu, string input )
 	}
 	infile.close();
 
-	return data;
+	Array<double> *data2;
+	data2 = &data;
+	return data2;
 }
 
-void MtuExtractor::read_TSn_tag( ifstream &infile, StationBase *Mtu, int position )
+void ExtractorMTU::read_TSn_tag( ifstream &infile, StationBase *station, int position )
 {
-	unsigned char *CurrentTag = new unsigned char[Mtu->tagsize];
+	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
 	double sampledenom, sampleenum;
 	char sampleunit;
 
@@ -75,21 +72,20 @@ void MtuExtractor::read_TSn_tag( ifstream &infile, StationBase *Mtu, int positio
 	{
 		infile.seekg ( position );
 		infile.read((char *) CurrentTag, 32);
-		Mtu->date.startSecond = int( CurrentTag[0] );
-		Mtu->date.startMinute = int( CurrentTag[1] );
-		Mtu->date.startHour  = int( CurrentTag[2] );
-		Mtu->date.startDay = int( CurrentTag[3] );
-		Mtu->date.startMonth = int( CurrentTag[4] );
-		Mtu->date.startYear = int( CurrentTag[5] );
-		Mtu->date.startYear = (2000 + Mtu->date.startYear)*( Mtu->date.startYear < 70 ) + ( 1900 + Mtu->date.startYear)*( Mtu->date.startYear >= 70 );
-		Mtu->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
-		Mtu->numberOfChannels = int( CurrentTag[12] );
-		//Mtu->nChannels = int( CurrentTag[12] );
-		Mtu->tagLength = int( CurrentTag[13] );
-		if( Mtu->tagLength != Mtu->tagsize )
-			cout << "tagsize != taglength = " << Mtu->tagLength << "\n" << 
-			"Change tagsize em Mtu.h to " << Mtu->tagLength << "\n";
-		Mtu->sampleLength = int( CurrentTag[17] );
+		station->date.startSecond = int( CurrentTag[0] );
+		station->date.startMinute = int( CurrentTag[1] );
+		station->date.startHour  = int( CurrentTag[2] );
+		station->date.startDay = int( CurrentTag[3] );
+		station->date.startMonth = int( CurrentTag[4] );
+		station->date.startYear = int( CurrentTag[5] );
+		station->date.startYear = (2000 + station->date.startYear)*( station->date.startYear < 70 ) + ( 1900 + station->date.startYear)*( station->date.startYear >= 70 );
+		station->mtu->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
+		station->numberOfChannels = int( CurrentTag[12] );
+		station->mtu->tagLength = int( CurrentTag[13] );
+		if( station->mtu->tagLength != station->mtu->tagsize )
+			cout << "tagsize != taglength = " << station->mtu->tagLength << "\n" << 
+			"Change tagsize em mtu.h to " << station->mtu->tagLength << "\n";
+		station->mtu->sampleLength = int( CurrentTag[17] );
 		sampledenom = double( CurrentTag[19] * 256
 			+ CurrentTag[18] );
 		sampleunit = CurrentTag[20];
@@ -109,13 +105,13 @@ void MtuExtractor::read_TSn_tag( ifstream &infile, StationBase *Mtu, int positio
 			sampleenum = 3600.0 * 24.0;
 			break;
 		}
-		Mtu->samplingRateInHertz = (size_t)(sampledenom / sampleenum);
-		Mtu->recordLength = (int)(Mtu->nScansPerRecord * Mtu->numberOfChannels * Mtu->sampleLength + Mtu->tagLength);
+		station->samplingRateInHertz = (size_t)(sampledenom / sampleenum);
+		station->mtu->recordLength = (int)(station->mtu->nScansPerRecord * station->numberOfChannels * station->mtu->sampleLength + station->mtu->tagLength);
 	}
     delete[] CurrentTag;
 }
 
-void MtuExtractor::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
+void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
 {
 	MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
 	MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
@@ -129,28 +125,28 @@ void MtuExtractor::fill_time_vector( Array<double> *timeVector, StationBase MtuB
 		val = MtuBase.samplingRateInHertz*diffInTime.total_seconds();
 	}
 
-	for( int i = 0; i < MtuCurrent.nScansPerRecord; i++ )
+	for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
 		(*timeVector)( i + idxOfTimeVector) = i + val;
 }
 
-Array<double> MtuExtractor::get_mtu_time_vector( StationBase *Mtu, string input )
+Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )
 {
-	StationBase newMtu = *Mtu;
+	StationBase newMtu = *station;
 	size_t startAt = 0;
 	size_t idxOfTimeVector = 0;
 
 	ifstream infile( input.c_str(), ios::binary );
-	Array<double> result( newMtu.numberOfSamples );
-	for( int i = 0; i < newMtu.numberOfRecords; i++ ) {
+	Array<double> result( newMtu.mtu->numberOfSamples );
+	for( int i = 0; i < newMtu.mtu->numberOfRecords; i++ ) {
 		read_TSn_tag( infile, &newMtu, startAt );
-		startAt += newMtu.recordLength;
-		fill_time_vector( &result, *Mtu, newMtu, i*newMtu.nScansPerRecord );
+		startAt += newMtu.mtu->recordLength;
+		fill_time_vector( &result, *station, newMtu, i*newMtu.mtu->nScansPerRecord );
 	}
 	infile.close();
 	return result;
 }
 
-int MtuExtractor::get_number_of_bytes( string infile )
+int ExtractorMTU::get_number_of_bytes( string infile )
 {
   streampos begin,end;
   ifstream myfile ( infile, ios::binary );
@@ -161,49 +157,49 @@ int MtuExtractor::get_number_of_bytes( string infile )
   return end - begin;
 }
 
-void MtuExtractor::get_data( const string filename, Array<double> *data, StationBase *Mtu )
+void ExtractorMTU::get_data( const string filename, Array<double> *data, StationBase *station )
 {
 	ifstream infile( filename.c_str(), ios::binary );
 	if ( infile )
     {
 		int counter = 0;
-		while (infile.good() && counter < Mtu->numberOfRecords )
+		while (infile.good() && counter < station->mtu->numberOfRecords )
 		{
-			read_TSn_time_series( infile, counter, data, Mtu );
+			read_TSn_time_series( infile, counter, data, station );
 			counter++;
 		}
     }
 }
 
-void MtuExtractor::read_TSn_time_series( ifstream &infile, int counter, Array<double> *data, StationBase *Mtu )
+void ExtractorMTU::read_TSn_time_series( ifstream &infile, int counter, Array<double> *data, StationBase *station )
 {
-	unsigned char *CurrentTag = new unsigned char[Mtu->tagsize];
+	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
 	char *buffer, *currentbyte;
 
-	infile.read( (char *) CurrentTag, Mtu->tagsize );
-	buffer = new char[ Mtu->recordLength - Mtu->tagLength ];
-    infile.read( buffer, Mtu->recordLength - Mtu->tagLength );
+	infile.read( (char *) CurrentTag, station->mtu->tagsize );
+	buffer = new char[ station->mtu->recordLength - station->mtu->tagLength ];
+    infile.read( buffer, station->mtu->recordLength - station->mtu->tagLength );
     currentbyte = buffer;
 	int line;
-	for (int i = 0; i < Mtu->nScansPerRecord; i++ )
+	for (int i = 0; i < station->mtu->nScansPerRecord; i++ )
     {
-		line = i + counter*Mtu->nScansPerRecord;
+		line = i + counter*station->mtu->nScansPerRecord;
 		(*data)(line,3) = read_value( currentbyte );
-        currentbyte += Mtu->sampleLength;
+        currentbyte += station->mtu->sampleLength;
 		(*data)(line,4) = read_value( currentbyte );
-        currentbyte += Mtu->sampleLength;
+        currentbyte += station->mtu->sampleLength;
 		(*data)(line,0) = read_value( currentbyte );
-        currentbyte += Mtu->sampleLength;
+        currentbyte += station->mtu->sampleLength;
 		(*data)(line,1) = read_value( currentbyte );
-        currentbyte += Mtu->sampleLength;
+        currentbyte += station->mtu->sampleLength;
 		(*data)(line,2) = read_value( currentbyte );
-        currentbyte += Mtu->sampleLength;
+        currentbyte += station->mtu->sampleLength;
     }
     delete[] buffer;
     delete[] CurrentTag;
 }
 
-int MtuExtractor::read_value( char *pos )
+int ExtractorMTU::read_value( char *pos )
 {
 	unsigned char byte1, byte2, byte3;
 
@@ -213,7 +209,7 @@ int MtuExtractor::read_value( char *pos )
 	return byte_to_int(byte1, byte2, byte3);
 }
 
-int MtuExtractor::byte_to_int( unsigned char first, unsigned char second, unsigned char last )
+int ExtractorMTU::byte_to_int( unsigned char first, unsigned char second, unsigned char last )
 {
 	const char highbit = 0x80;
 	int value;
@@ -229,7 +225,7 @@ int MtuExtractor::byte_to_int( unsigned char first, unsigned char second, unsign
 	return (value);
 }
 
-table MtuExtractor::read_tbl(string tblstr) {
+table ExtractorMTU::read_tbl(string tblstr) {
     table tbl;
 
     // open file
@@ -617,7 +613,7 @@ table MtuExtractor::read_tbl(string tblstr) {
     return tbl;
 }
 
-bool MtuExtractor::correct_types(void) {
+bool ExtractorMTU::correct_types(void) {
     if(sizeof(INT2)==2 && sizeof(INT4)==4 && sizeof(int8)==8 && sizeof(float8)==8)
         return true;
     else {
@@ -639,16 +635,16 @@ bool MtuExtractor::correct_types(void) {
     }
 }
 
-INT2 MtuExtractor::bswap_16(INT2 datum) {
+INT2 ExtractorMTU::bswap_16(INT2 datum) {
     return (((datum & 0xff00) >>  8) | ((datum & 0x00ff) <<  8));
 }
 
-INT4 MtuExtractor::bswap_32(INT4 datum) {
+INT4 ExtractorMTU::bswap_32(INT4 datum) {
     return (((datum & 0xff000000) >> 24) | ((datum & 0x00ff0000) >>  8) | \
             ((datum & 0x0000ff00) <<  8) | ((datum & 0x000000ff) << 24));
 }
 
-int8 MtuExtractor::bswap_64(int8 datum) {
+int8 ExtractorMTU::bswap_64(int8 datum) {
     INT4 lword= INT4(datum & 0x00000000ffffffff);
     INT4 hword=INT4(datum>>32);
     int8 lw=bswap_32(lword);
@@ -656,7 +652,7 @@ int8 MtuExtractor::bswap_64(int8 datum) {
     return (int8)(hw<<32 | lw);
 }
 
-bool MtuExtractor::positioning(ifstream& tblf, char* label) {
+bool ExtractorMTU::positioning(ifstream& tblf, char* label) {
     tblf.seekg(0);
 
     char labeltmp[5];
@@ -677,7 +673,7 @@ bool MtuExtractor::positioning(ifstream& tblf, char* label) {
         return false;
 }
 
-double MtuExtractor::conv_lat(const char* LATG) {
+double ExtractorMTU::conv_lat(const char* LATG) {
     string latstr(LATG,13);
 
     string degstr(latstr,0,2);
@@ -694,7 +690,7 @@ double MtuExtractor::conv_lat(const char* LATG) {
     return signal*(deg+min/60.);
 }
 
-double MtuExtractor::conv_lon(const char* LNGG) {
+double ExtractorMTU::conv_lon(const char* LNGG) {
     string lonstr(LNGG,13);
 
     string degstr(lonstr,0,3);
@@ -711,7 +707,7 @@ double MtuExtractor::conv_lon(const char* LNGG) {
     return signal*(deg+min/60.);
 }
 
-Array<Complex> MtuExtractor::read_cts_file( StationBase *station, string ctsFileName )
+Array<Complex> ExtractorMTU::read_cts_file( StationBase *station, string ctsFileName )
 {
 	ifstream in(ctsFileName);
 	if(!in) {
@@ -752,7 +748,7 @@ Array<Complex> MtuExtractor::read_cts_file( StationBase *station, string ctsFile
 	return result;
 }
 
-void MtuExtractor::cts2array( Array<Complex> *data, string line, index_t idx )
+void ExtractorMTU::cts2array( Array<Complex> *data, string line, index_t idx )
 {
 	std::stringstream istr(line.c_str());
     double freq, real, imag;
@@ -776,7 +772,7 @@ void MtuExtractor::cts2array( Array<Complex> *data, string line, index_t idx )
 	}
 }
 
-phoenixTsBand_t MtuExtractor::get_phoenix_TS_band( string fileName )
+phoenixTsBand_t ExtractorMTU::get_phoenix_TS_band( string fileName )
 {
 	if( fileName.find("TS2") != std::string::npos )
 		return TS2;
