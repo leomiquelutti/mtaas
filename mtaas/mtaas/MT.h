@@ -72,20 +72,31 @@ class DirectoryProperties
 {
 public:
 	
-	size_t							numberOfFolders;
+	DirectoryProperties(std::string aux):
+		pathName(aux),
+		mtuCounter(0), 
+		aduCounter(0) 
+	{ this->numberOfFolders = get_number_of_subfolders(); };
+	
 	std::string						pathName;
-
-	void							define_files( const std::string inputSubPath, size_t numberOfFiles, std::string *files );
-	static std::vector<StationBase>	initialize_stations( std::string inputPath );
-	//StationBase*					initialize_stations();
+	std::vector<StationBase>	initialize_stations( std::string inputPath );
 	size_t							get_number_of_tbl_files( const std::string inputSubPath );
-	void							get_tbl_names( std::string *TBLs, std::string file, size_t size );
 
 private:
-	
-	void							fill_station_names( StationBase *station );
+
+	size_t							mtuCounter;
+	size_t							aduCounter;
+	size_t							numberOfFolders;
+		
+	void							initialize_station_parameters( std::vector<StationBase> *station );
 	void							fill_station_names( std::vector<StationBase> *station );
-	size_t							get_number_of_subfolders( std::string inputPath );
+	void							fill_station_types( std::vector<StationBase> *station );
+
+	void							define_tbl_files( StationBase *station );
+	size_t							get_number_of_subfolders();
+	void							get_tbl_names( std::string *TBLs, std::string file, size_t size );
+	void							fill_in_dir_mtu_info( StationBase *station );
+	size_t							count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **v );
 };
 
 
@@ -118,32 +129,18 @@ private:
 	double declinationInput;
 };
 
-
-// main class contains all info regarding stations
-class StationBase
+// class containing info from each TS within station
+class StationFile
 {
 public:
-	
-	StationBase() {};
-	StationBase(const StationBase& element) {*this = element;};
-    StationBase& operator = (const StationBase& element);     //which needs definition
-	std::string		fileName;
-	std::string		stationName;
-	FILE_TYPE		fileType;
-	Date			date;
-	Position		position;
-
-	// extractors
-	ExtractorMTU *mtu;
 
 	// raw data
-	matCUDA::Array<double>	*data;
+	matCUDA::Array<double>	*timeSeries;
 	matCUDA::Array<Complex>	*correctionToData;
 	matCUDA::Array<double>	*timeVector;
 
 	// parameters for processing
-	size_t			numberOfChannels;
-	size_t			samplingRateInHertz;
+	size_t			samplingFrequency;
 	double			maxFreqInHertz;
 	double			minFreqInHertz;
 	bool			isContinuous;
@@ -153,6 +150,44 @@ public:
 	void			initialize_parameters();
 	bool			is_acquisition_continuos( Array<double> *timeVector );
 	void			read_time_series();
+
+private:
+	double			exDipoleLength;
+	double			eyDipoleLength;
+
+	// functions
+	//ExtractorMTU *read_time_series_mtu();
+};
+
+
+// main class contains all info regarding stations
+class StationBase
+{
+public:
+	
+	//StationBase() {};
+	//StationBase(const StationBase& element) {*this = element;};
+ //   StationBase& operator = (const StationBase& element);     //which needs definition
+	std::string		fileName;
+	std::string		stationName;
+	FILE_TYPE		fileType;
+	Date			date;
+	Position		position;
+	size_t			amountOfTs;
+
+	// one StationFile for each time-series (or analogous) file
+	std::vector<StationFile> *ts;
+
+	// extractors
+	ExtractorMTU *mtu;
+
+	// parameters for processing
+	size_t			numberOfChannels;
+
+	// functions
+	//void			initialize_parameters();
+	//bool			is_acquisition_continuos( Array<double> *timeVector );
+	void			read_time_series( DirectoryProperties *dirInfo );
 
 private:
 	double			exDipoleLength;

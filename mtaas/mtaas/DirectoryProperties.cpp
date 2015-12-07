@@ -7,6 +7,24 @@
 using namespace boost::filesystem;
 using namespace boost::filesystem::path_traits;
 
+std::vector<StationBase> DirectoryProperties::initialize_stations( std::string inputPath )
+{
+	// create vector of 'numberOfFolders' StationBases
+	std::vector<StationBase> station( this->numberOfFolders );
+	
+	// initialize stations parameters, as name, path, type and its types derivatives
+	this->initialize_station_parameters( &station );
+
+	return station;
+}
+
+void DirectoryProperties::initialize_station_parameters( std::vector<StationBase> *station )
+{
+	this->fill_station_names( station );
+
+	this->fill_station_types( station );
+}
+
 void DirectoryProperties::fill_station_names( std::vector<StationBase> *station )
 {
 	path p( this->pathName );
@@ -45,11 +63,55 @@ void DirectoryProperties::fill_station_names( std::vector<StationBase> *station 
 	}
 }
 
-void DirectoryProperties::fill_station_names( StationBase *station )
+void DirectoryProperties::fill_station_types( std::vector<StationBase> *station )
 {
-	path p( this->pathName );
+	size_t amountOfTbl = 0;
+	size_t amountOfTsnPerTbl = 0;
+	
+	for( int i = 0; i < this->numberOfFolders; i++ ) {
 
-	int a = this->numberOfFolders;
+		amountOfTbl = this->get_number_of_tbl_files( (*station)[i].stationName );
+
+		if( amountOfTbl > 0 ) {
+			(*station)[i].fileType = FILE_TYPE_MTU;
+			fill_in_dir_mtu_info( &(*station)[i] );
+		}
+	}
+}
+
+void DirectoryProperties::fill_in_dir_mtu_info( StationBase *station )
+{
+	std::vector<string> **aux;
+	std::string **auxTSnFiles;
+	size_t auxTSnCounter = 0;
+
+	station->mtu = new ExtractorMTU;
+	station->mtu->amountOfTbl = this->get_number_of_tbl_files( station->stationName ); 
+	*aux = new std::vector<string>[station->mtu->amountOfTbl];
+	*auxTSnFiles = new std::string[station->mtu->amountOfTbl];
+
+	// get amount of TSn files for all TBL files
+	station->ts = new std::vector<StationFile>[1];
+	station->mtu->inputTbl = new std::string[station->mtu->amountOfTbl];
+	for( int i = 0; i < station->mtu->amountOfTbl; i++ ) {
+		define_tbl_files( station );
+		auxTSnCounter = count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
+		station->mtu->amountOfTSn += auxTSnCounter;
+	}
+
+	// fill in station->ts with each TSn file
+	for( int i = 0; i < station->mtu->amountOfTbl; i++ ) {
+		define_tbl_files( station );
+		station->mtu->amountOfTSn += count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
+	}
+}
+
+size_t DirectoryProperties::count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **vectorOfTSnFiles )
+{
+	size_t fileCounter = 0;
+	std::string inputSubPath = this->pathName + "\\" + station->stationName;
+
+	path p( inputSubPath );
 	try
 	{
 		if( exists( p ) )
@@ -63,54 +125,39 @@ void DirectoryProperties::fill_station_names( StationBase *station )
 
 				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
 
-				size_t counter = 0;
 				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
-					station[counter++].stationName = it->filename().string();
+				{
+					if( it->filename().string().find( station->mtu->inputTbl[idx] + ".TS" ) != std::string::npos ) {
+						//vectorOfTSnFiles[idx][fileCounter++] = "";
+					}
+				}
 			}
 			else
 			{
-				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
+				std::cout << p << " exists, but no TSn file could be associated with " << station->mtu->inputTbl[idx] << ".TBL file" << std::endl;
+				return 0;
 			}
 		}
 		else
 		{
 			std::cout << p << " does not exist" << std::endl;
+			return 0;
 		}
 	}
 	catch( const filesystem_error& ex )
 	{ 
-		std::cout << ex.what() << '\n'; 
+		std::cout << ex.what() << '\n' << std::endl; 
+		return 0;
 	}
+
+	return fileCounter;
 }
 
-std::vector<StationBase> DirectoryProperties::initialize_stations( std::string inputPath )
-{
-	DirectoryProperties dirInfo;
-	const size_t numberOfFolders = dirInfo.get_number_of_subfolders( inputPath );
-
-	std::vector<StationBase> station( numberOfFolders );
-	
-	dirInfo.fill_station_names( &station );
-
-	return station;
-}
-
-//StationBase* DirectoryProperties::initialize_stations()
-//{
-//	this->numberOfFolders = this->get_number_of_subfolders( this->pathName );
-//
-//	StationBase *station = new StationBase[ this->numberOfFolders ];
-//
-//	this->fill_station_names( station );
-//
-//	return station;
-//}
-
-size_t DirectoryProperties::get_number_of_subfolders( std::string inputPath )
+size_t DirectoryProperties::get_number_of_subfolders()
 {
 	using namespace boost::lambda;
 
-	path p( inputPath );   
+	path p( this->pathName );   
 
 	size_t subfoldersCounter = std::count_if(
         directory_iterator(p),
@@ -121,8 +168,9 @@ size_t DirectoryProperties::get_number_of_subfolders( std::string inputPath )
 	return subfoldersCounter;
 }
 
-void DirectoryProperties::define_files( const std::string inputSubPath, size_t numberOfFiles, std::string *files )
+void DirectoryProperties::define_tbl_files( StationBase *station )
 {
+	std::string inputSubPath = this->pathName + "\\" + station->stationName;
 	path p( inputSubPath );
 
 	size_t fileCounter = 0;
@@ -142,7 +190,7 @@ void DirectoryProperties::define_files( const std::string inputSubPath, size_t n
 				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
 				{
 					if( it->filename().string().find( ".TBL" ) != std::string::npos )
-						files[ fileCounter++ ] = it->filename().string().substr( 0, it->filename().string().find( ".TBL" ) );
+						station->mtu->inputTbl[ fileCounter++ ] = it->filename().string().substr( 0, it->filename().string().find( ".TBL" ) );
 				}
 			}
 			else
@@ -166,7 +214,7 @@ void DirectoryProperties::define_files( const std::string inputSubPath, size_t n
 
 size_t DirectoryProperties::get_number_of_tbl_files( const std::string inputSubPath )
 {
-	path p( inputSubPath );
+	path p( this->pathName + "\\" + inputSubPath );
 
 	size_t fileCounter = 0;
 	try
@@ -184,7 +232,7 @@ size_t DirectoryProperties::get_number_of_tbl_files( const std::string inputSubP
 
 				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
 				{
-					std::cout << it->filename().string() << std::endl;
+					//std::cout << it->filename().string() << std::endl;
 					if( it->filename().string().find( ".TBL" ) != std::string::npos )
 						fileCounter++;
 				}

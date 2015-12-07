@@ -16,10 +16,27 @@
 using namespace std;
 using namespace matCUDA;
 
-void ExtractorMTU::read_time_series( StationBase *station ) 
+void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *dirInfo ) 
 {
-	station->mtu->tbl = station->mtu->read_tbl( string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MATLAB\\MT data processing\\data\\1282407A.TBL") );
-	station->data = station->mtu->read_mtu_data( station, string("G:\\ANP\\parana\\dados_recebidos_141112\\PHASE 5 POINT BY POINT\\02-139\\RAW-BIN\\1327A21B.TS5") );
+	station->mtu = new ExtractorMTU;
+	station->ts = new std::vector<StationFile>(station->mtu->amountOfTSn);
+
+	for( int i = 0; i < station->ts->size(); i++ ) {
+		station->mtu->tbl = station->mtu->read_tbl( ".TBL" );
+		//&(*station)[i]
+		//station->ts(i)->
+		//(*station).&(*ts)[i].timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		(*station).(*ts)[i].timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+	}
+
+	station->mtu->tbl = station->mtu->read_tbl( string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TBL") );
+	//station->ts->timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+	
+	
+	
+	
+	
+	
 	//this->mtu->tbl = station[0].read_tbl( inputTbl1 );
 	//station[0].tbl = station[0].read_tbl( inputTbl1 );
 	//Array<double> data1 = station[0].read_mtu_data( &station[0], inputTSn1 );
@@ -64,69 +81,69 @@ Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, string input )
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationBase *station, int position )
 {
-	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
-	double sampledenom, sampleenum;
-	char sampleunit;
+	//unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
+	//double sampledenom, sampleenum;
+	//char sampleunit;
 
-	if( infile.is_open() == true )
-	{
-		infile.seekg ( position );
-		infile.read((char *) CurrentTag, 32);
-		station->date.startSecond = int( CurrentTag[0] );
-		station->date.startMinute = int( CurrentTag[1] );
-		station->date.startHour  = int( CurrentTag[2] );
-		station->date.startDay = int( CurrentTag[3] );
-		station->date.startMonth = int( CurrentTag[4] );
-		station->date.startYear = int( CurrentTag[5] );
-		station->date.startYear = (2000 + station->date.startYear)*( station->date.startYear < 70 ) + ( 1900 + station->date.startYear)*( station->date.startYear >= 70 );
-		station->mtu->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
-		station->numberOfChannels = int( CurrentTag[12] );
-		station->mtu->tagLength = int( CurrentTag[13] );
-		if( station->mtu->tagLength != station->mtu->tagsize )
-			cout << "tagsize != taglength = " << station->mtu->tagLength << "\n" << 
-			"Change tagsize em mtu.h to " << station->mtu->tagLength << "\n";
-		station->mtu->sampleLength = int( CurrentTag[17] );
-		sampledenom = double( CurrentTag[19] * 256
-			+ CurrentTag[18] );
-		sampleunit = CurrentTag[20];
-		sampleenum;
-		switch (sampleunit)
-		{
-		case 0:
-			sampleenum = 1.0;
-			break;
-		case 1:
-			sampleenum = 60.0;
-			break;
-		case 2:
-			sampleenum = 3600.0;
-			break;
-		case 3:
-			sampleenum = 3600.0 * 24.0;
-			break;
-		}
-		station->samplingRateInHertz = (size_t)(sampledenom / sampleenum);
-		station->mtu->recordLength = (int)(station->mtu->nScansPerRecord * station->numberOfChannels * station->mtu->sampleLength + station->mtu->tagLength);
-	}
-    delete[] CurrentTag;
+	//if( infile.is_open() == true )
+	//{
+	//	infile.seekg ( position );
+	//	infile.read((char *) CurrentTag, 32);
+	//	station->date.startSecond = int( CurrentTag[0] );
+	//	station->date.startMinute = int( CurrentTag[1] );
+	//	station->date.startHour  = int( CurrentTag[2] );
+	//	station->date.startDay = int( CurrentTag[3] );
+	//	station->date.startMonth = int( CurrentTag[4] );
+	//	station->date.startYear = int( CurrentTag[5] );
+	//	station->date.startYear = (2000 + station->date.startYear)*( station->date.startYear < 70 ) + ( 1900 + station->date.startYear)*( station->date.startYear >= 70 );
+	//	station->mtu->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
+	//	station->numberOfChannels = int( CurrentTag[12] );
+	//	station->mtu->tagLength = int( CurrentTag[13] );
+	//	if( station->mtu->tagLength != station->mtu->tagsize )
+	//		cout << "tagsize != taglength = " << station->mtu->tagLength << "\n" << 
+	//		"Change tagsize em mtu.h to " << station->mtu->tagLength << "\n";
+	//	station->mtu->sampleLength = int( CurrentTag[17] );
+	//	sampledenom = double( CurrentTag[19] * 256
+	//		+ CurrentTag[18] );
+	//	sampleunit = CurrentTag[20];
+	//	sampleenum;
+	//	switch (sampleunit)
+	//	{
+	//	case 0:
+	//		sampleenum = 1.0;
+	//		break;
+	//	case 1:
+	//		sampleenum = 60.0;
+	//		break;
+	//	case 2:
+	//		sampleenum = 3600.0;
+	//		break;
+	//	case 3:
+	//		sampleenum = 3600.0 * 24.0;
+	//		break;
+	//	}
+	//	station->ts->samplingFrequency = (size_t)(sampledenom / sampleenum);
+	//	station->mtu->recordLength = (int)(station->mtu->nScansPerRecord * station->numberOfChannels * station->mtu->sampleLength + station->mtu->tagLength);
+	//}
+ //   delete[] CurrentTag;
 }
 
 void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
 {
-	MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
-	MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
+	//MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
+	//MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
 
-	bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
-	unsigned int val = 0;
+	//bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
+	//unsigned int val = 0;
 
-	if( checkTime == false )
-	{
-		boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
-		val = MtuBase.samplingRateInHertz*diffInTime.total_seconds();
-	}
+	//if( checkTime == false )
+	//{
+	//	boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
+	//	val = MtuBase.ts->samplingFrequency*diffInTime.total_seconds();
+	//}
 
-	for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
-		(*timeVector)( i + idxOfTimeVector) = i + val;
+	//for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
+	//	(*timeVector)( i + idxOfTimeVector) = i + val;
 }
 
 Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )

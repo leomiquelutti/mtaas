@@ -13,6 +13,8 @@ using namespace std;
 
 class StationBase;
 
+class DirectoryProperties;
+
 typedef short INT2;
 typedef int INT4;
 typedef long long int8;
@@ -78,16 +80,18 @@ public:
 		ECV(1.E6*empirical_factor),
 		HCV(1.E9),
 		FS(0x7FFFFF),
-		tagsize(32){}
+		tagsize(32),
+		amountOfTSn(0) {}
 
 	// variables
-	std::string		inputTbl;
+	std::string		*inputTbl;
 	phoenixTsBand_t MtuTsBand;
 	table			tbl;
 	size_t			amountOfTbl;
+	size_t			amountOfTSn;
 
 	// functions
-	static void read_time_series( StationBase *station );
+	static void read_time_series( StationBase *station, DirectoryProperties *dirInfo );
 	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
 	phoenixTsBand_t get_phoenix_TS_band( std::string fileName );
 	matCUDA::Array<Complex>	read_cts_file( StationBase *station, std::string ctsFileName );

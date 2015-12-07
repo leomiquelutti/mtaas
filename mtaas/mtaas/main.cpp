@@ -18,13 +18,17 @@ int main()
 	// INPUTS
 	TS_TO_FFT ts_to_fft = FIXED_WINDOW_LENGTH;
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;
+	std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu";
+
+	// object to explore the main path and its subfolders
+	DirectoryProperties dirInfo( inputPath );
 
 	// get stations name, path and type
-	std::vector<StationBase> station = DirectoryProperties::initialize_stations( std::string("G:\\teste_mtprox") );
+	std::vector<StationBase> station = dirInfo.initialize_stations( inputPath );
 
 	// read time-series
 	for( int i = 0; i < station.size(); i++ )
-		station[i].read_time_series();
+		station[i].read_time_series( &dirInfo );
 	
 	//int inputc;
 	//int outputc;
