@@ -1,4 +1,4 @@
-#include "mtu.h"
+#include "Mtu.h"
 #include "GetDeclination.h"
 
 #include <cctype>
@@ -8,7 +8,7 @@
 #include <cstring>
 #include <fstream>
 #include <string>
-#include <vector>
+//#include <vector>
 #include <sstream>
 #include <boost\iostreams\device\array.hpp>
 #include <boost/exception/all.hpp>
@@ -18,16 +18,14 @@ using namespace matCUDA;
 
 void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *dirInfo ) 
 {
-	station->mtu = new ExtractorMTU;
-	station->ts = new std::vector<StationFile>(station->mtu->amountOfTSn);
-
-	for( int i = 0; i < station->ts->size(); i++ ) {
+	StationFile auxTs;
+	
+	for( int i = 0; i < station->mtu->amountOfTSn; i++ ) {
 		station->mtu->tbl = station->mtu->read_tbl( ".TBL" );
-		//&(*station)[i]
-		//station->ts(i)->
-		//(*station).&(*ts)[i].timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
-		(*station).(*ts)[i].timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		auxTs.timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		station->ts.push_back(auxTs);
 	}
+	
 
 	station->mtu->tbl = station->mtu->read_tbl( string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TBL") );
 	//station->ts->timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );

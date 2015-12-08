@@ -129,6 +129,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DirectoryProperties.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="GetDeclination.h" />
     <ClInclude Include="MT.h" />

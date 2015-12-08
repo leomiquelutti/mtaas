@@ -6,6 +6,7 @@
 
 #include "stdafx.h"
 #include "Engine.h"
+#include "DirectoryProperties.h"
 
 #define N_BANDS 4
 
@@ -24,11 +25,18 @@ int main()
 	DirectoryProperties dirInfo( inputPath );
 
 	// get stations name, path and type
-	std::vector<StationBase> station = dirInfo.initialize_stations( inputPath );
+	std::vector<StationBase> station = dirInfo.initialize_stations();
 
 	// read time-series
 	for( int i = 0; i < station.size(); i++ )
 		station[i].read_time_series( &dirInfo );
+
+	// delete everything allocated
+	// TODO
+	Utils::delete_all( &station );
+
+
+
 	
 	//int inputc;
 	//int outputc;

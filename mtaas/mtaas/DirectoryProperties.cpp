@@ -1,4 +1,5 @@
-#include "MT.h"
+#include "DirectoryProperties.h"
+#include "Mtu.h"
 
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -7,7 +8,7 @@
 using namespace boost::filesystem;
 using namespace boost::filesystem::path_traits;
 
-std::vector<StationBase> DirectoryProperties::initialize_stations( std::string inputPath )
+std::vector<StationBase> DirectoryProperties::initialize_stations()
 {
 	// create vector of 'numberOfFolders' StationBases
 	std::vector<StationBase> station( this->numberOfFolders );
@@ -65,45 +66,90 @@ void DirectoryProperties::fill_station_names( std::vector<StationBase> *station 
 
 void DirectoryProperties::fill_station_types( std::vector<StationBase> *station )
 {
-	size_t amountOfTbl = 0;
-	size_t amountOfTsnPerTbl = 0;
+	size_t nTbl = 0;
+	size_t nTs = 0;
 	
 	for( int i = 0; i < this->numberOfFolders; i++ ) {
 
-		amountOfTbl = this->get_number_of_tbl_files( (*station)[i].stationName );
+		nTbl = this->get_number_of_tbl_files( (*station)[i].stationName );
 
-		if( amountOfTbl > 0 ) {
+		// MTU type
+		if( nTbl > 0 ) {
 			(*station)[i].fileType = FILE_TYPE_MTU;
-			fill_in_dir_mtu_info( &(*station)[i] );
+			//(*station)[i].
+			MtuDirInfo::fill_in_dir_mtu_info( &(*station)[i] );
 		}
 	}
 }
 
-void DirectoryProperties::fill_in_dir_mtu_info( StationBase *station )
+void MtuDirInfo::fill_in_dir_mtu_info( StationBase *station )
 {
-	std::vector<string> **aux;
-	std::string **auxTSnFiles;
-	size_t auxTSnCounter = 0;
+	path p( station->stationName );
 
-	station->mtu = new ExtractorMTU;
-	station->mtu->amountOfTbl = this->get_number_of_tbl_files( station->stationName ); 
-	*aux = new std::vector<string>[station->mtu->amountOfTbl];
-	*auxTSnFiles = new std::string[station->mtu->amountOfTbl];
+	try
+	{
+		if( exists( p ) )
+		{
+			if( is_directory( p ) )
+			{
+				typedef std::vector<path> vec;             // store paths,
+				vec v;                                // so we can sort them later
 
-	// get amount of TSn files for all TBL files
-	station->ts = new std::vector<StationFile>[1];
-	station->mtu->inputTbl = new std::string[station->mtu->amountOfTbl];
-	for( int i = 0; i < station->mtu->amountOfTbl; i++ ) {
-		define_tbl_files( station );
-		auxTSnCounter = count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
-		station->mtu->amountOfTSn += auxTSnCounter;
+				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
+
+				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
+
+				size_t counter = 0;
+				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
+					station->stationName = it->filename().string(); // TODO
+			}
+			else
+			{
+				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
+			}
+		}
+		else
+		{
+			std::cout << p << " does not exist" << std::endl;
+		}
 	}
-
-	// fill in station->ts with each TSn file
-	for( int i = 0; i < station->mtu->amountOfTbl; i++ ) {
-		define_tbl_files( station );
-		station->mtu->amountOfTSn += count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
+	catch( const filesystem_error& ex )
+	{ 
+		std::cout << ex.what() << '\n'; 
 	}
+	StationFile auxTs;
+	auxTs.mtuPathInfo = new MtuDirInfo;
+
+
+	//StationFile auxTs;
+	////auxTs.pathInfo = new MtuDirInfo;
+	//station->ts.push_back(auxTs);
+	////station->ts[0].pathInfo = new MtuDirInfo;
+	//std::vector<std::string> **aux;
+	//std::vector<std::string> aux2[5][6];
+	//aux[1][1].push_back("a");
+	//std::string **auxTSnFiles;
+	//size_t auxTSnCounter = 0;
+	//
+	//station->mtu = new ExtractorMTU;
+	//station->mtu->nTbl = this->get_number_of_tbl_files( station->stationName ); 
+	//*aux = new std::vector<string>[station->mtu->nTbl];
+	//*auxTSnFiles = new std::string[station->mtu->nTbl];
+	//
+	//// get amount of TSn files for all TBL files
+	////station->ts = new std::vector<StationFile>[1];
+	//station->mtu->inputTbl = new std::string[station->mtu->nTbl];
+	//for( int i = 0; i < station->mtu->nTbl; i++ ) {
+	//	define_tbl_files( station );
+	//	auxTSnCounter = count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
+	//	station->mtu->amountOfTSn += auxTSnCounter;
+	//}
+	//
+	//// fill in station->ts with each TSn file
+	//for( int i = 0; i < station->mtu->nTbl; i++ ) {
+	//	define_tbl_files( station );
+	//	station->mtu->amountOfTSn += count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
+	//}
 }
 
 size_t DirectoryProperties::count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **vectorOfTSnFiles )
@@ -268,3 +314,5 @@ void DirectoryProperties::get_tbl_names( std::string *TBLs, std::string file, si
 
 	infile.close();
 }
+
+//void DirInfo::foo() {}

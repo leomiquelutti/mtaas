@@ -1,4 +1,5 @@
 #include "MT.h"
+#include "Mtu.h"
 //#include <sstream>
 
 //StationBase& StationBase::operator = (const StationBase& element)
@@ -50,5 +51,12 @@ void StationBase::read_time_series( DirectoryProperties *dirInfo )
 		ExtractorMTU::read_time_series( this, dirInfo );
 	//case FILE_TYPE_ADU_07:
 		//this->adu->read_time_series();
+	}
+}
+
+void Utils::delete_all( std::vector<StationBase> *station )
+{
+	for( int i = 0; i < station->size(); i++ ) {
+
 	}
 }

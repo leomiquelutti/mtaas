@@ -15,6 +15,7 @@
 //#include <tchar.h>
 #include <string>
 #include <complex>
+#include <vector>
 
 typedef std::complex<double> Complex;
 

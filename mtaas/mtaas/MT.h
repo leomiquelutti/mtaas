@@ -21,8 +21,12 @@
 #ifndef MT_H
 #define MT_H
 
+class ExtractorMTU;
+class MtuDirInfo;
+class Adu07DirInfo;
+class DirectoryProperties;
+
 #include "stdafx.h"
-#include "Mtu.h"
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 
@@ -37,9 +41,6 @@
 
 using namespace matCUDA;
 
-class StationBase;
-class ExtractorMTU;
-
 // identify file type
 typedef enum {
 	FILE_TYPE_EMI = 1,
@@ -49,13 +50,11 @@ typedef enum {
 	FILE_TYPE_ADU_07
 } FILE_TYPE;
 
-
 // sets whether the segment length will be variable or fixed (with decimation)
 typedef enum {
 	FIXED_WINDOW_LENGTH = 1,
 	VARIABLE_WINDOW_LENGTH
 } TS_TO_FFT;
-
 
 // sets which kind of estimator will be used to retrieve the transfer tensors
 typedef enum {
@@ -65,40 +64,6 @@ typedef enum {
 	BOUNDED_INFLUENCE,
 	TWO_STEPS_BOUNDED_INFLUENCE
 } ESTIMATOR_TYPE;
-
-
-// responsible for extracting stations' info, as name, path and type
-class DirectoryProperties
-{
-public:
-	
-	DirectoryProperties(std::string aux):
-		pathName(aux),
-		mtuCounter(0), 
-		aduCounter(0) 
-	{ this->numberOfFolders = get_number_of_subfolders(); };
-	
-	std::string						pathName;
-	std::vector<StationBase>	initialize_stations( std::string inputPath );
-	size_t							get_number_of_tbl_files( const std::string inputSubPath );
-
-private:
-
-	size_t							mtuCounter;
-	size_t							aduCounter;
-	size_t							numberOfFolders;
-		
-	void							initialize_station_parameters( std::vector<StationBase> *station );
-	void							fill_station_names( std::vector<StationBase> *station );
-	void							fill_station_types( std::vector<StationBase> *station );
-
-	void							define_tbl_files( StationBase *station );
-	size_t							get_number_of_subfolders();
-	void							get_tbl_names( std::string *TBLs, std::string file, size_t size );
-	void							fill_in_dir_mtu_info( StationBase *station );
-	size_t							count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **v );
-};
-
 
 // responsible for time reference of station
 class Date
@@ -114,7 +79,6 @@ public:
 
 	std::string getDateStr();
 };
-
 
 // responsible for positioning of station
 class Position
@@ -145,6 +109,9 @@ public:
 	double			minFreqInHertz;
 	bool			isContinuous;
 	unsigned int	continuousSamples;
+	//DirInfo	*pathInfo;
+	MtuDirInfo		*mtuPathInfo;
+	Adu07DirInfo	*adu07PathInfo;
 
 	// functions
 	void			initialize_parameters();
@@ -158,7 +125,6 @@ private:
 	// functions
 	//ExtractorMTU *read_time_series_mtu();
 };
-
 
 // main class contains all info regarding stations
 class StationBase
@@ -176,7 +142,7 @@ public:
 	size_t			amountOfTs;
 
 	// one StationFile for each time-series (or analogous) file
-	std::vector<StationFile> *ts;
+	std::vector<StationFile> ts;
 
 	// extractors
 	ExtractorMTU *mtu;
@@ -195,6 +161,14 @@ private:
 
 	// functions
 	//ExtractorMTU *read_time_series_mtu();
+};
+
+// utils
+class Utils
+{
+public:
+
+	static void delete_all( std::vector<StationBase> *station );
 };
 
 #endif

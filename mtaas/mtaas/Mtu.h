@@ -87,7 +87,7 @@ public:
 	std::string		*inputTbl;
 	phoenixTsBand_t MtuTsBand;
 	table			tbl;
-	size_t			amountOfTbl;
+	size_t			nTbl;
 	size_t			amountOfTSn;
 
 	// functions
