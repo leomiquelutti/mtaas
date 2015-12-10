@@ -1,4 +1,5 @@
 #include "DirectoryProperties.h"
+#include "MT.h"
 #include "Mtu.h"
 
 #include <iostream>
@@ -21,9 +22,12 @@ std::vector<StationBase> DirectoryProperties::initialize_stations()
 
 void DirectoryProperties::initialize_station_parameters( std::vector<StationBase> *station )
 {
+	// get stations names
 	this->fill_station_names( station );
 
-	this->fill_station_types( station );
+	// get station type and stores paths for TS and complementary needed files, 
+	// accordingly to FILE_TYPE (equipment type)
+	this->fill_station_types_and_paths( station );
 }
 
 void DirectoryProperties::fill_station_names( std::vector<StationBase> *station )
@@ -44,159 +48,41 @@ void DirectoryProperties::fill_station_names( std::vector<StationBase> *station 
 				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
 
 				size_t counter = 0;
-				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
-					(*station)[counter++].stationName = it->filename().string();
-					//station[counter++].stationName = it->filename().string();
-			}
-			else
-			{
-				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
-			}
-		}
-		else
-		{
-			std::cout << p << " does not exist" << std::endl;
-		}
-	}
-	catch( const filesystem_error& ex )
-	{ 
-		std::cout << ex.what() << '\n'; 
-	}
-}
-
-void DirectoryProperties::fill_station_types( std::vector<StationBase> *station )
-{
-	size_t nTbl = 0;
-	size_t nTs = 0;
-	
-	for( int i = 0; i < this->numberOfFolders; i++ ) {
-
-		nTbl = this->get_number_of_tbl_files( (*station)[i].stationName );
-
-		// MTU type
-		if( nTbl > 0 ) {
-			(*station)[i].fileType = FILE_TYPE_MTU;
-			//(*station)[i].
-			MtuDirInfo::fill_in_dir_mtu_info( &(*station)[i] );
-		}
-	}
-}
-
-void MtuDirInfo::fill_in_dir_mtu_info( StationBase *station )
-{
-	path p( station->stationName );
-
-	try
-	{
-		if( exists( p ) )
-		{
-			if( is_directory( p ) )
-			{
-				typedef std::vector<path> vec;             // store paths,
-				vec v;                                // so we can sort them later
-
-				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
-
-				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
-
-				size_t counter = 0;
-				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
-					station->stationName = it->filename().string(); // TODO
-			}
-			else
-			{
-				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
-			}
-		}
-		else
-		{
-			std::cout << p << " does not exist" << std::endl;
-		}
-	}
-	catch( const filesystem_error& ex )
-	{ 
-		std::cout << ex.what() << '\n'; 
-	}
-	StationFile auxTs;
-	auxTs.mtuPathInfo = new MtuDirInfo;
-
-
-	//StationFile auxTs;
-	////auxTs.pathInfo = new MtuDirInfo;
-	//station->ts.push_back(auxTs);
-	////station->ts[0].pathInfo = new MtuDirInfo;
-	//std::vector<std::string> **aux;
-	//std::vector<std::string> aux2[5][6];
-	//aux[1][1].push_back("a");
-	//std::string **auxTSnFiles;
-	//size_t auxTSnCounter = 0;
-	//
-	//station->mtu = new ExtractorMTU;
-	//station->mtu->nTbl = this->get_number_of_tbl_files( station->stationName ); 
-	//*aux = new std::vector<string>[station->mtu->nTbl];
-	//*auxTSnFiles = new std::string[station->mtu->nTbl];
-	//
-	//// get amount of TSn files for all TBL files
-	////station->ts = new std::vector<StationFile>[1];
-	//station->mtu->inputTbl = new std::string[station->mtu->nTbl];
-	//for( int i = 0; i < station->mtu->nTbl; i++ ) {
-	//	define_tbl_files( station );
-	//	auxTSnCounter = count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
-	//	station->mtu->amountOfTSn += auxTSnCounter;
-	//}
-	//
-	//// fill in station->ts with each TSn file
-	//for( int i = 0; i < station->mtu->nTbl; i++ ) {
-	//	define_tbl_files( station );
-	//	station->mtu->amountOfTSn += count_TSn_files_for_each_tbl_file_and_get_its_name( station, i, aux );
-	//}
-}
-
-size_t DirectoryProperties::count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **vectorOfTSnFiles )
-{
-	size_t fileCounter = 0;
-	std::string inputSubPath = this->pathName + "\\" + station->stationName;
-
-	path p( inputSubPath );
-	try
-	{
-		if( exists( p ) )
-		{
-			if( is_directory( p ) )
-			{
-				typedef std::vector<path> vec;             // store paths,
-				vec v;                                // so we can sort them later
-
-				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
-
-				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
-
-				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
-				{
-					if( it->filename().string().find( station->mtu->inputTbl[idx] + ".TS" ) != std::string::npos ) {
-						//vectorOfTSnFiles[idx][fileCounter++] = "";
-					}
+				for (vec::const_iterator it (v.begin()); it != v.end(); ++it) {
+					(*station)[counter].stationName = it->filename().string();
+					(*station)[counter++].path = this->pathName;
 				}
 			}
 			else
 			{
-				std::cout << p << " exists, but no TSn file could be associated with " << station->mtu->inputTbl[idx] << ".TBL file" << std::endl;
-				return 0;
+				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
 			}
 		}
 		else
 		{
 			std::cout << p << " does not exist" << std::endl;
-			return 0;
 		}
 	}
 	catch( const filesystem_error& ex )
 	{ 
-		std::cout << ex.what() << '\n' << std::endl; 
-		return 0;
+		std::cout << ex.what() << '\n'; 
 	}
+}
 
-	return fileCounter;
+void DirectoryProperties::fill_station_types_and_paths( std::vector<StationBase> *station )
+{
+	size_t nTbl = 0;
+		
+	for( int i = 0; i < this->numberOfFolders; i++ ) {
+
+		nTbl = this->get_number_of_tbl_files( &(*station)[i] );
+
+		// MTU type
+		if( nTbl > 0 ) {
+			(*station)[i].fileType = FILE_TYPE_MTU;
+			MtuDirInfo::fill_in_dir_mtu_info( &(*station)[i], nTbl );
+		}
+	}
 }
 
 size_t DirectoryProperties::get_number_of_subfolders()
@@ -214,53 +100,9 @@ size_t DirectoryProperties::get_number_of_subfolders()
 	return subfoldersCounter;
 }
 
-void DirectoryProperties::define_tbl_files( StationBase *station )
+size_t DirectoryProperties::get_number_of_tbl_files( StationBase *station )
 {
-	std::string inputSubPath = this->pathName + "\\" + station->stationName;
-	path p( inputSubPath );
-
-	size_t fileCounter = 0;
-	try
-	{
-		if( exists( p ) )
-		{
-			if( is_directory( p ) )
-			{
-				typedef std::vector<path> vec;             // store paths,
-				vec v;                                // so we can sort them later
-
-				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
-
-				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
-
-				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
-				{
-					if( it->filename().string().find( ".TBL" ) != std::string::npos )
-						station->mtu->inputTbl[ fileCounter++ ] = it->filename().string().substr( 0, it->filename().string().find( ".TBL" ) );
-				}
-			}
-			else
-			{
-				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
-				return;
-			}
-		}
-		else
-		{
-			std::cout << p << " does not exist" << std::endl;
-			return;
-		}
-	}
-	catch( const filesystem_error& ex )
-	{ 
-		std::cout << ex.what() << '\n' << std::endl; 
-		return;
-	}
-}
-
-size_t DirectoryProperties::get_number_of_tbl_files( const std::string inputSubPath )
-{
-	path p( this->pathName + "\\" + inputSubPath );
+	path p( this->pathName + "\\" + station->stationName );
 
 	size_t fileCounter = 0;
 	try
@@ -304,15 +146,227 @@ size_t DirectoryProperties::get_number_of_tbl_files( const std::string inputSubP
 	return fileCounter;
 }
 
-void DirectoryProperties::get_tbl_names( std::string *TBLs, std::string file, size_t size )
-{
-	std::ifstream infile;
-	infile.open( file.c_str(), std::ios::in );
+size_t DirectoryProperties::get_number_of_tsn_files( StationBase *station )
+{	
+	size_t fileCounter = 0;
+	size_t tsCounter = 0;
+	StationFile auxTs;
 
-	for( int i = 0; i < size; ++i )
-		std::getline( infile, TBLs[ i ] );
+	path p( this->pathName + "\\" + station->stationName );
 
-	infile.close();
+	try
+	{
+		if( exists( p ) )
+		{
+			if( is_directory( p ) )
+			{
+				typedef std::vector<path> vec;             // store paths,
+				vec v;                                // so we can sort them later
+
+				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
+
+				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
+
+				// get amount of TSn files
+				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
+					if( it->filename().string().find( ".TS" ) != std::string::npos )
+						fileCounter++;
+
+				//// get TSn and its respective TBL and CTS files
+				//for( int i = 0; i < nTbl; i++ ) {
+				//	for (vec::const_iterator it (v.begin()); it != v.end(); ++it) {
+				//		if( it->filename().string().find( auxTblNames[i].substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".TS" ) != std::string::npos ) {
+				//			auxTs.mtu->tblFile = auxTblNames[i];
+				//			auxTs.mtu->tsnFile = it->filename().string();
+				//			auxTs.mtu->mtuTsBand = phoenixTsBand_t( atoi( &(auxTs.mtu->tsnFile.back()) ) );
+				//			auxTs.mtu->ctsFile = it->filename().string().substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".CTS";
+				//			//station->ts[tsCounter++].mtu = new ExtractorMTU;
+				//			station->ts.push_back(auxTs);
+				//			tsCounter++;
+				//		}
+				//	}
+				//}
+			}
+			else
+			{
+				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
+			}
+		}
+		else
+		{
+			std::cout << p << " does not exist" << std::endl;
+		}
+	}
+	catch( const filesystem_error& ex )
+	{ 
+		std::cout << ex.what() << '\n'; 
+	}
+
+	return fileCounter;
 }
 
-//void DirInfo::foo() {}
+void MtuDirInfo::fill_in_dir_mtu_info( StationBase *station, size_t nTbl )
+{	
+	size_t fileCounter = 0;
+	vector<string> auxTblNames(nTbl);
+	StationFile auxTs;
+
+	string auxPath = station->path + "\\" + station->stationName;
+	path p( auxPath );
+
+	try
+	{
+		if( exists( p ) )
+		{
+			if( is_directory( p ) )
+			{
+				typedef std::vector<path> vec;             // store paths,
+				vec v;                                // so we can sort them later
+
+				copy(directory_iterator(p), directory_iterator(), back_inserter(v));
+
+				sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
+
+				// get tbl names
+				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
+				{
+					if( it->filename().string().find( ".TBL" ) != std::string::npos )
+						auxTblNames[ fileCounter++ ] = it->filename().string();
+				}
+
+				// get TSn and its respective TBL and CTS files
+				size_t tsCounter = 0;
+				for( int i = 0; i < nTbl; i++ ) {
+					for (vec::const_iterator it (v.begin()); it != v.end(); ++it) {
+						if( it->filename().string().find( auxTblNames[i].substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".TS" ) != std::string::npos ) {
+							auxTs.mtu.tsnFile = it->string();
+							auxTs.mtu.tblFile = auxPath + "\\" + auxTblNames[i];
+							auxTs.mtu.mtuTsBand = phoenixTsBand_t( atoi( &(auxTs.mtu.tsnFile.back()) ) );
+							auxTs.mtu.ctsFile = auxPath + "\\" + it->filename().string().substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".CTS";
+
+							station->ts.push_back(auxTs);
+							tsCounter++;
+						}
+					}
+				}
+				station->amountOfTs = tsCounter;
+			}
+			else
+			{
+				std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
+			}
+		}
+		else
+		{
+			std::cout << p << " does not exist" << std::endl;
+		}
+	}
+	catch( const filesystem_error& ex )
+	{ 
+		std::cout << ex.what() << '\n'; 
+	}
+}
+
+//size_t DirectoryProperties::count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **vectorOfTSnFiles )
+//{
+//	//size_t fileCounter = 0;
+//	//std::string inputSubPath = this->pathName + "\\" + station->stationName;
+//
+//	//path p( inputSubPath );
+//	//try
+//	//{
+//	//	if( exists( p ) )
+//	//	{
+//	//		if( is_directory( p ) )
+//	//		{
+//	//			typedef std::vector<path> vec;             // store paths,
+//	//			vec v;                                // so we can sort them later
+//
+//	//			copy(directory_iterator(p), directory_iterator(), back_inserter(v));
+//
+//	//			sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
+//
+//	//			for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
+//	//			{
+//	//				if( it->filename().string().find( station->mtu->inputTbl[idx] + ".TS" ) != std::string::npos ) {
+//	//					//vectorOfTSnFiles[idx][fileCounter++] = "";
+//	//				}
+//	//			}
+//	//		}
+//	//		else
+//	//		{
+//	//			std::cout << p << " exists, but no TSn file could be associated with " << station->mtu->inputTbl[idx] << ".TBL file" << std::endl;
+//	//			return 0;
+//	//		}
+//	//	}
+//	//	else
+//	//	{
+//	//		std::cout << p << " does not exist" << std::endl;
+//	//		return 0;
+//	//	}
+//	//}
+//	//catch( const filesystem_error& ex )
+//	//{ 
+//	//	std::cout << ex.what() << '\n' << std::endl; 
+//	//	return 0;
+//	//}
+//
+//	//return fileCounter;
+//
+//	return 0;
+//}
+//
+//void DirectoryProperties::define_tbl_files( StationBase *station )
+//{
+//	//std::string inputSubPath = this->pathName + "\\" + station->stationName;
+//	//path p( inputSubPath );
+//
+//	//size_t fileCounter = 0;
+//	//try
+//	//{
+//	//	if( exists( p ) )
+//	//	{
+//	//		if( is_directory( p ) )
+//	//		{
+//	//			typedef std::vector<path> vec;             // store paths,
+//	//			vec v;                                // so we can sort them later
+//
+//	//			copy(directory_iterator(p), directory_iterator(), back_inserter(v));
+//
+//	//			sort(v.begin(), v.end());             // sort, since directory iteration is not ordered on some file systems
+//
+//	//			for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
+//	//			{
+//	//				if( it->filename().string().find( ".TBL" ) != std::string::npos )
+//	//					station->mtu->inputTbl[ fileCounter++ ] = it->filename().string().substr( 0, it->filename().string().find( ".TBL" ) );
+//	//			}
+//	//		}
+//	//		else
+//	//		{
+//	//			std::cout << p << " exists, but is neither a regular file nor a directory" << std::endl;
+//	//			return;
+//	//		}
+//	//	}
+//	//	else
+//	//	{
+//	//		std::cout << p << " does not exist" << std::endl;
+//	//		return;
+//	//	}
+//	//}
+//	//catch( const filesystem_error& ex )
+//	//{ 
+//	//	std::cout << ex.what() << '\n' << std::endl; 
+//	//	return;
+//	//}
+//}
+//
+//void DirectoryProperties::get_tbl_names( std::string *TBLs, std::string file, size_t size )
+//{
+//	std::ifstream infile;
+//	infile.open( file.c_str(), std::ios::in );
+//
+//	for( int i = 0; i < size; ++i )
+//		std::getline( infile, TBLs[ i ] );
+//
+//	infile.close();
+//}

@@ -75,20 +75,23 @@ typedef enum{
 class ExtractorMTU
 {
 public:
-	ExtractorMTU():
-		empirical_factor(0.1),
-		ECV(1.E6*empirical_factor),
-		HCV(1.E9),
-		FS(0x7FFFFF),
-		tagsize(32),
-		amountOfTSn(0) {}
+	ExtractorMTU() {
+		tagsize = 32;
+		FS = 0x7FFFFF;
+	}
 
-	// variables
-	std::string		*inputTbl;
-	phoenixTsBand_t MtuTsBand;
+	ExtractorMTU(const ExtractorMTU& element) {*this = element;};
+
+    ExtractorMTU& operator = (const ExtractorMTU& element);     //which needs definition
+
+	// paths to files
+	std::string		tblFile;
+	std::string		tsnFile;
+	std::string		ctsFile;
+
+	// data
+	phoenixTsBand_t mtuTsBand;
 	table			tbl;
-	size_t			nTbl;
-	size_t			amountOfTSn;
 
 	// functions
 	static void read_time_series( StationBase *station, DirectoryProperties *dirInfo );
@@ -101,23 +104,16 @@ public:
 private:
 
 	// variables
-	std::string		ctsFileName;
-	const double	ECV;// = 1.E6*empirical_factor;    // convert V/m to mV/km
-	const double	empirical_factor;// = 0.1;
-	const long		FS;// = 0x7FFFFF;  // full scale (normalizing the ADN)
-	const double	HCV;// = 1.E9;     // convert T to nT
+	double			FS;// = 0x7FFFFF;  // full scale (normalizing the ADN)
 	int				nScansPerRecord;
 	int				numberOfBytes;
-	int				numberOfCtsFiles;
 	int				nChannels;
 	int				numberOfRecords;
 	int				numberOfSamples;
-	int				numberOfTsFilesForCurrentCts;
 	int				recordLength;
 	int				sampleLength;
-	//double		samplingRate;
 	int				tagLength;
-	const size_t	tagsize;// = 32;
+	size_t			tagsize;// = 32;
 	
 	// functions
 	static INT2		bswap_16(INT2 datum);

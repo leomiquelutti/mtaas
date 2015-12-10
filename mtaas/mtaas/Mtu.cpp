@@ -1,3 +1,4 @@
+#include "MT.h"
 #include "Mtu.h"
 #include "GetDeclination.h"
 
@@ -16,19 +17,36 @@
 using namespace std;
 using namespace matCUDA;
 
+ExtractorMTU& ExtractorMTU::operator = (const ExtractorMTU& element)
+{
+	this->ctsFile = element.ctsFile;
+	this->tblFile = element.tblFile;
+	this->tsnFile = element.tsnFile;
+	this->FS = element.FS;
+	this->mtuTsBand = element.mtuTsBand;
+	this->nChannels = element.nChannels;
+	this->nScansPerRecord = element.nScansPerRecord;
+	this->numberOfBytes = element.numberOfBytes;
+	this->numberOfRecords = element.numberOfRecords;
+	this->numberOfSamples = element.numberOfSamples;
+	this->recordLength = element.recordLength;
+	this->sampleLength = element.sampleLength;
+	this->tagLength = element.tagLength;
+	this->tagsize = element.tagsize;
+	this->tbl = element.tbl;
+
+	return *this;
+}
+
 void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *dirInfo ) 
 {
-	StationFile auxTs;
-	
-	for( int i = 0; i < station->mtu->amountOfTSn; i++ ) {
-		station->mtu->tbl = station->mtu->read_tbl( ".TBL" );
-		auxTs.timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
-		station->ts.push_back(auxTs);
+	for( int i = 0; i < station->ts.size(); i++ ) {
+		station->ts[i].mtu.tbl = station->ts[i].mtu.read_tbl( ".TBL" );
+		station->ts[i].timeSeries = station->ts[i].mtu.read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		//auxTs.mtu->tbl = auxTs.mtu->read_tbl( ".TBL" );
+		//auxTs.timeSeries = auxTs.mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		//station->ts.push_back(auxTs);
 	}
-	
-
-	station->mtu->tbl = station->mtu->read_tbl( string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TBL") );
-	//station->ts->timeSeries = station->mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
 	
 	
 	
@@ -41,40 +59,42 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	//Array<double> timeVector1 = station[0].get_mtu_time_vector( &station[0], inputTSn1 );
 	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
 	//
-	//station[0].MtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
+	//station[0].mtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
 	//station[0].isContinuous = station[0].is_acquisition_continuos( &timeVector1 );
 }
 
 Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, string input ) 
 {
-	ifstream infile( input.c_str(), ios::binary );
-	if ( infile.good() )
-    {
-		read_TSn_tag( infile, station, 0 );
-    }
-	infile.close();
-	
-	station->mtu->numberOfBytes = get_number_of_bytes( input );
-	station->mtu->numberOfRecords = station->mtu->numberOfBytes / station->mtu->recordLength;
-	station->mtu->numberOfSamples = station->mtu->numberOfBytes / station->mtu->recordLength * station->mtu->nScansPerRecord;
+	//ifstream infile( input.c_str(), ios::binary );
+	//if ( infile.good() )
+ //   {
+	//	read_TSn_tag( infile, station, 0 );
+ //   }
+	//infile.close();
+	//
+	//station->mtu->numberOfBytes = get_number_of_bytes( input );
+	//station->mtu->numberOfRecords = station->mtu->numberOfBytes / station->mtu->recordLength;
+	//station->mtu->numberOfSamples = station->mtu->numberOfBytes / station->mtu->recordLength * station->mtu->nScansPerRecord;
 
-	Array<double> data( (size_t)station->mtu->numberOfSamples, (const index_t)station->numberOfChannels );
+	//Array<double> data( (size_t)station->mtu->numberOfSamples, (const index_t)station->numberOfChannels );
 
-	if( infile.good() )
-	{
-		cout << "Reading time series data from " << input << endl << endl;
-		get_data( input, &data, station );
-	}
-	else
-	{
-		//errorLog( "FILE TS", input );
-		cout << "Could not open " << input << endl << endl;
-	}
-	infile.close();
+	//if( infile.good() )
+	//{
+	//	cout << "Reading time series data from " << input << endl << endl;
+	//	get_data( input, &data, station );
+	//}
+	//else
+	//{
+	//	//errorLog( "FILE TS", input );
+	//	cout << "Could not open " << input << endl << endl;
+	//}
+	//infile.close();
 
-	Array<double> *data2;
-	data2 = &data;
-	return data2;
+	//Array<double> *data2;
+	//data2 = &data;
+	//return data2;
+
+	return (&Array<double>(1));
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationBase *station, int position )
@@ -146,19 +166,21 @@ void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuB
 
 Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )
 {
-	StationBase newMtu = *station;
-	size_t startAt = 0;
-	size_t idxOfTimeVector = 0;
+	//StationBase newMtu = *station;
+	//size_t startAt = 0;
+	//size_t idxOfTimeVector = 0;
 
-	ifstream infile( input.c_str(), ios::binary );
-	Array<double> result( newMtu.mtu->numberOfSamples );
-	for( int i = 0; i < newMtu.mtu->numberOfRecords; i++ ) {
-		read_TSn_tag( infile, &newMtu, startAt );
-		startAt += newMtu.mtu->recordLength;
-		fill_time_vector( &result, *station, newMtu, i*newMtu.mtu->nScansPerRecord );
-	}
-	infile.close();
-	return result;
+	//ifstream infile( input.c_str(), ios::binary );
+	//Array<double> result( newMtu.mtu->numberOfSamples );
+	//for( int i = 0; i < newMtu.mtu->numberOfRecords; i++ ) {
+	//	read_TSn_tag( infile, &newMtu, startAt );
+	//	startAt += newMtu.mtu->recordLength;
+	//	fill_time_vector( &result, *station, newMtu, i*newMtu.mtu->nScansPerRecord );
+	//}
+	//infile.close();
+	//return result;
+
+	return Array<double>(1);
 }
 
 int ExtractorMTU::get_number_of_bytes( string infile )
@@ -174,44 +196,44 @@ int ExtractorMTU::get_number_of_bytes( string infile )
 
 void ExtractorMTU::get_data( const string filename, Array<double> *data, StationBase *station )
 {
-	ifstream infile( filename.c_str(), ios::binary );
-	if ( infile )
-    {
-		int counter = 0;
-		while (infile.good() && counter < station->mtu->numberOfRecords )
-		{
-			read_TSn_time_series( infile, counter, data, station );
-			counter++;
-		}
-    }
+	//ifstream infile( filename.c_str(), ios::binary );
+	//if ( infile )
+ //   {
+	//	int counter = 0;
+	//	while (infile.good() && counter < station->mtu->numberOfRecords )
+	//	{
+	//		read_TSn_time_series( infile, counter, data, station );
+	//		counter++;
+	//	}
+ //   }
 }
 
 void ExtractorMTU::read_TSn_time_series( ifstream &infile, int counter, Array<double> *data, StationBase *station )
 {
-	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
-	char *buffer, *currentbyte;
-
-	infile.read( (char *) CurrentTag, station->mtu->tagsize );
-	buffer = new char[ station->mtu->recordLength - station->mtu->tagLength ];
-    infile.read( buffer, station->mtu->recordLength - station->mtu->tagLength );
-    currentbyte = buffer;
-	int line;
-	for (int i = 0; i < station->mtu->nScansPerRecord; i++ )
-    {
-		line = i + counter*station->mtu->nScansPerRecord;
-		(*data)(line,3) = read_value( currentbyte );
-        currentbyte += station->mtu->sampleLength;
-		(*data)(line,4) = read_value( currentbyte );
-        currentbyte += station->mtu->sampleLength;
-		(*data)(line,0) = read_value( currentbyte );
-        currentbyte += station->mtu->sampleLength;
-		(*data)(line,1) = read_value( currentbyte );
-        currentbyte += station->mtu->sampleLength;
-		(*data)(line,2) = read_value( currentbyte );
-        currentbyte += station->mtu->sampleLength;
-    }
-    delete[] buffer;
-    delete[] CurrentTag;
+//	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
+//	char *buffer, *currentbyte;
+//
+//	infile.read( (char *) CurrentTag, station->mtu->tagsize );
+//	buffer = new char[ station->mtu->recordLength - station->mtu->tagLength ];
+//    infile.read( buffer, station->mtu->recordLength - station->mtu->tagLength );
+//    currentbyte = buffer;
+//	int line;
+//	for (int i = 0; i < station->mtu->nScansPerRecord; i++ )
+//    {
+//		line = i + counter*station->mtu->nScansPerRecord;
+//		(*data)(line,3) = read_value( currentbyte );
+//        currentbyte += station->mtu->sampleLength;
+//		(*data)(line,4) = read_value( currentbyte );
+//        currentbyte += station->mtu->sampleLength;
+//		(*data)(line,0) = read_value( currentbyte );
+//        currentbyte += station->mtu->sampleLength;
+//		(*data)(line,1) = read_value( currentbyte );
+//        currentbyte += station->mtu->sampleLength;
+//		(*data)(line,2) = read_value( currentbyte );
+//        currentbyte += station->mtu->sampleLength;
+//    }
+//    delete[] buffer;
+//    delete[] CurrentTag;
 }
 
 int ExtractorMTU::read_value( char *pos )
@@ -244,7 +266,7 @@ table ExtractorMTU::read_tbl(string tblstr) {
     table tbl;
 
     // open file
-    ifstream tblf(tblstr.c_str(), ios::in | ios::binary);
+	ifstream tblf(this->tblFile);
     if(tblf.fail()) {
         cout<<"can't open the tbl file "<<tblstr<<endl;
         exit(1);
@@ -724,43 +746,45 @@ double ExtractorMTU::conv_lon(const char* LNGG) {
 
 Array<Complex> ExtractorMTU::read_cts_file( StationBase *station, string ctsFileName )
 {
-	ifstream in(ctsFileName);
-	if(!in) {
-        cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
-        exit(1);
-    }
-	    
-	string line;
+	//ifstream in(ctsFileName);
+	//if(!in) {
+ //       cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
+ //       exit(1);
+ //   }
+	//    
+	//string line;
 
-	// detect beginning of data in cts file
-    while(line.find( '/' ) == string::npos)
-		getline(in,line);
-	
-	size_t numberOfPoints = 0;
-	while(in.eof() == false) {
-		getline(in,line);
-		numberOfPoints++;
-	}
-	in.close();
+	//// detect beginning of data in cts file
+ //   while(line.find( '/' ) == string::npos)
+	//	getline(in,line);
+	//
+	//size_t numberOfPoints = 0;
+	//while(in.eof() == false) {
+	//	getline(in,line);
+	//	numberOfPoints++;
+	//}
+	//in.close();
 
-	Array<Complex> result( numberOfPoints-1,  station->numberOfChannels + 2 );
-	in.open(ctsFileName);
-	if(!in) {
-        cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
-        exit(1);
-    }
+	//Array<Complex> result( numberOfPoints-1,  station->numberOfChannels + 2 );
+	//in.open(ctsFileName);
+	//if(!in) {
+ //       cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
+ //       exit(1);
+ //   }
 
-	// detect beginning of data in cts file
-    while(line.find( '/' ) == string::npos)
-		getline(in,line);
+	//// detect beginning of data in cts file
+ //   while(line.find( '/' ) == string::npos)
+	//	getline(in,line);
 
-	// fills in result with correction values
-	for( int i = 0; i < result.GetDescriptor().GetDim(0); i++ ) {
-		getline(in,line);
-		cts2array( &result, line, i );		
-	}
+	//// fills in result with correction values
+	//for( int i = 0; i < result.GetDescriptor().GetDim(0); i++ ) {
+	//	getline(in,line);
+	//	cts2array( &result, line, i );		
+	//}
 
-	return result;
+	//return result;
+
+	return 0;
 }
 
 void ExtractorMTU::cts2array( Array<Complex> *data, string line, index_t idx )

@@ -48,7 +48,7 @@ class MtuDirInfo
 {
 public:
 	size_t nTbl;
-	static void fill_in_dir_mtu_info( StationBase *station );
+	static void fill_in_dir_mtu_info( StationBase *station, size_t nTbl );
 };
 
 // responsible for extracting stations' info, as name, path and type
@@ -63,8 +63,9 @@ public:
 	{ this->numberOfFolders = get_number_of_subfolders(); };
 	
 	std::string						pathName;
-	std::vector<StationBase>	initialize_stations();
-	size_t							get_number_of_tbl_files( const std::string inputSubPath );
+	std::vector<StationBase>		initialize_stations();
+	size_t							get_number_of_tbl_files( StationBase *station );
+	size_t							get_number_of_tsn_files( StationBase *station );
 
 private:
 
@@ -74,12 +75,10 @@ private:
 		
 	void							initialize_station_parameters( std::vector<StationBase> *station );
 	void							fill_station_names( std::vector<StationBase> *station );
-	void							fill_station_types( std::vector<StationBase> *station );
+	void							fill_station_types_and_paths( std::vector<StationBase> *station );
 
-	void							define_tbl_files( StationBase *station );
 	size_t							get_number_of_subfolders();
 	void							get_tbl_names( std::string *TBLs, std::string file, size_t size );
-	size_t							count_TSn_files_for_each_tbl_file_and_get_its_name( StationBase *station, size_t idx, std::vector<std::string> **v );
 };
 
 #endif

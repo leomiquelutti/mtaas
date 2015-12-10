@@ -27,6 +27,7 @@ class Adu07DirInfo;
 class DirectoryProperties;
 
 #include "stdafx.h"
+#include "Mtu.h"
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 
@@ -98,6 +99,12 @@ class StationFile
 {
 public:
 
+	StationFile() {};
+	~StationFile() {};
+
+	StationFile(const StationFile& element) {*this = element;};
+    StationFile& operator = (const StationFile& element);
+
 	// raw data
 	matCUDA::Array<double>	*timeSeries;
 	matCUDA::Array<Complex>	*correctionToData;
@@ -108,22 +115,16 @@ public:
 	double			maxFreqInHertz;
 	double			minFreqInHertz;
 	bool			isContinuous;
-	unsigned int	continuousSamples;
-	//DirInfo	*pathInfo;
-	MtuDirInfo		*mtuPathInfo;
-	Adu07DirInfo	*adu07PathInfo;
+
+	// extractors
+	ExtractorMTU mtu;
 
 	// functions
-	void			initialize_parameters();
 	bool			is_acquisition_continuos( Array<double> *timeVector );
-	void			read_time_series();
 
 private:
 	double			exDipoleLength;
 	double			eyDipoleLength;
-
-	// functions
-	//ExtractorMTU *read_time_series_mtu();
 };
 
 // main class contains all info regarding stations
@@ -131,11 +132,16 @@ class StationBase
 {
 public:
 	
-	//StationBase() {};
-	//StationBase(const StationBase& element) {*this = element;};
- //   StationBase& operator = (const StationBase& element);     //which needs definition
-	std::string		fileName;
+	StationBase() :
+		stationName("NULL"),
+		path("NULL"),
+		amountOfTs(0) {};
+
+	StationBase(const StationBase& element) {*this = element;};
+    StationBase& operator = (const StationBase& element);
+
 	std::string		stationName;
+	std::string		path;
 	FILE_TYPE		fileType;
 	Date			date;
 	Position		position;
@@ -144,23 +150,8 @@ public:
 	// one StationFile for each time-series (or analogous) file
 	std::vector<StationFile> ts;
 
-	// extractors
-	ExtractorMTU *mtu;
-
-	// parameters for processing
-	size_t			numberOfChannels;
-
-	// functions
-	//void			initialize_parameters();
-	//bool			is_acquisition_continuos( Array<double> *timeVector );
+	// function to read time-series
 	void			read_time_series( DirectoryProperties *dirInfo );
-
-private:
-	double			exDipoleLength;
-	double			eyDipoleLength;
-
-	// functions
-	//ExtractorMTU *read_time_series_mtu();
 };
 
 // utils

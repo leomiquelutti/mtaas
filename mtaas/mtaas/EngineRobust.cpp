@@ -62,7 +62,7 @@ int CEngineRobust::process_mtu()
 	//Array<double> timeVector1 = station[0].get_mtu_time_vector( &station[0], inputTSn1 );
 	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
 	//
-	//station[0].MtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
+	//station[0].mtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
 	//station[0].isContinuous = station[0].is_acquisition_continuos( &timeVector1 );
 
 	//data1 = data1.detrend()*taper;

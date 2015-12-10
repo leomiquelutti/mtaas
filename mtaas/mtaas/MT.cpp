@@ -2,16 +2,34 @@
 #include "Mtu.h"
 //#include <sstream>
 
-//StationBase& StationBase::operator = (const StationBase& element)
-//{
-//	*this = element;
-//	return *this;
-//}
+StationBase& StationBase::operator = (const StationBase& element)
+{
+	this->amountOfTs = element.amountOfTs;
+	this->date = element.date;
+	this->fileType = element.fileType;
+	this->path = element.path;
+	this->position = element.position;
+	this->stationName = element.stationName;
+	this->ts = element.ts;
 
-//void StationBase::initialize_parameters()
-//{
-//	//maxFreqInHertz = 1;
-//}
+	return *this;
+}
+
+StationFile& StationFile::operator = (const StationFile& element)
+{
+	this->correctionToData = element.correctionToData;
+	this->exDipoleLength = element.exDipoleLength;
+	this->eyDipoleLength = element.eyDipoleLength;
+	this->isContinuous = element.isContinuous;
+	this->maxFreqInHertz = element.maxFreqInHertz;
+	this->minFreqInHertz = element.minFreqInHertz;
+	this->mtu = element.mtu;
+	this->samplingFrequency = element.samplingFrequency;
+	this->timeSeries = element.timeSeries;
+	this->timeVector = element.timeVector;
+
+	return *this;
+}
 
 std::string Date::getDateStr()
 {
@@ -50,7 +68,7 @@ void StationBase::read_time_series( DirectoryProperties *dirInfo )
 	case FILE_TYPE_MTU:
 		ExtractorMTU::read_time_series( this, dirInfo );
 	//case FILE_TYPE_ADU_07:
-		//this->adu->read_time_series();
+		//ExtractorADU::read_time_series( this, dirInfo );
 	}
 }
 
