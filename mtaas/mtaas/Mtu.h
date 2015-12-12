@@ -12,7 +12,7 @@
 using namespace std;
 
 class StationBase;
-
+class StationFile;
 class DirectoryProperties;
 
 typedef short INT2;
@@ -98,8 +98,9 @@ public:
 	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
 	phoenixTsBand_t get_phoenix_TS_band( std::string fileName );
 	matCUDA::Array<Complex>	read_cts_file( StationBase *station, std::string ctsFileName );
-	matCUDA::Array<double>	*read_mtu_data( StationBase *station, std::string input );
-	table			read_tbl(std::string tblstr);
+	matCUDA::Array<double>	*read_mtu_data( StationBase *station, size_t idx );
+	StationFile get_parameters();
+	table			read_tbl();
 
 private:
 
@@ -128,7 +129,7 @@ private:
 	static void		get_data( const std::string filename, matCUDA::Array<double> *data, StationBase *station );
 	static int		get_number_of_bytes( std::string infile );
 	static bool		positioning( std::ifstream &tbl, char* label);
-	static void		read_TSn_tag( std::ifstream &filestream, StationBase *mtu, int position );
+	void		read_TSn_tag( ifstream &infile, StationFile *ts, size_t position );
 	static void		read_TSn_time_series( std::ifstream &infile, int counter, matCUDA::Array<double> *data, StationBase *station );
 	static int		read_value( char *pos );
 };

@@ -17,8 +17,6 @@
 
 int main()
 {
-
-
 	// INPUTS
 	TS_TO_FFT ts_to_fft = FIXED_WINDOW_LENGTH;
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;

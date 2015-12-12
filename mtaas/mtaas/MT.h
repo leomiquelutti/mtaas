@@ -94,37 +94,69 @@ private:
 	double declinationInput;
 };
 
+class Channel
+{
+public:
+	
+	Channel() : 
+		countConversion(1),
+		gain(1) {};
+
+	~Channel() {
+		delete arCoeff;
+		delete correction;
+		delete timeSeries;
+	}
+
+	Channel(const Channel& element) {*this = element;};
+    Channel& operator = (const Channel& element);
+	
+	matCUDA::Array<double>	*timeSeries;
+	matCUDA::Array<double> *arCoeff;
+	matCUDA::Array<double> *correction;
+	double countConversion;
+	double orientationHor;
+	double orientationVer;
+	std::string name;
+	double gain;
+};
+
+
+
 // class containing info from each TS within station
 class StationFile
 {
 public:
 
 	StationFile() {};
-	~StationFile() {};
+	~StationFile() {
+		delete timeVector;  };
 
 	StationFile(const StationFile& element) {*this = element;};
     StationFile& operator = (const StationFile& element);
 
 	// raw data
-	matCUDA::Array<double>	*timeSeries;
-	matCUDA::Array<Complex>	*correctionToData;
 	matCUDA::Array<double>	*timeVector;
 
 	// parameters for processing
-	size_t			samplingFrequency;
+	double			samplingFrequency;
 	double			maxFreqInHertz;
 	double			minFreqInHertz;
 	bool			isContinuous;
+	size_t			nChannels;
+	double			exDipoleLength;
+	double			eyDipoleLength;
+	Date			date;
 
 	// extractors
 	ExtractorMTU mtu;
+
+	std::vector<Channel> ch;
 
 	// functions
 	bool			is_acquisition_continuos( Array<double> *timeVector );
 
 private:
-	double			exDipoleLength;
-	double			eyDipoleLength;
 };
 
 // main class contains all info regarding stations
@@ -143,7 +175,6 @@ public:
 	std::string		stationName;
 	std::string		path;
 	FILE_TYPE		fileType;
-	Date			date;
 	Position		position;
 	size_t			amountOfTs;
 

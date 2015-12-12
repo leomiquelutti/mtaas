@@ -5,7 +5,6 @@
 StationBase& StationBase::operator = (const StationBase& element)
 {
 	this->amountOfTs = element.amountOfTs;
-	this->date = element.date;
 	this->fileType = element.fileType;
 	this->path = element.path;
 	this->position = element.position;
@@ -17,7 +16,7 @@ StationBase& StationBase::operator = (const StationBase& element)
 
 StationFile& StationFile::operator = (const StationFile& element)
 {
-	this->correctionToData = element.correctionToData;
+	this->date = element.date;
 	this->exDipoleLength = element.exDipoleLength;
 	this->eyDipoleLength = element.eyDipoleLength;
 	this->isContinuous = element.isContinuous;
@@ -25,8 +24,22 @@ StationFile& StationFile::operator = (const StationFile& element)
 	this->minFreqInHertz = element.minFreqInHertz;
 	this->mtu = element.mtu;
 	this->samplingFrequency = element.samplingFrequency;
-	this->timeSeries = element.timeSeries;
 	this->timeVector = element.timeVector;
+	this->ch = element.ch;
+
+	return *this;
+}
+
+Channel& Channel::operator = (const Channel& element)
+{
+	this->arCoeff = element.arCoeff;
+	this->timeSeries = element.timeSeries;
+	this->correction = element.correction;
+	this->countConversion = element.countConversion;
+	this->orientationHor = element.orientationHor;
+	this->orientationVer = element.orientationVer;
+	this->name = element.name;
+	this->gain = element.gain;
 
 	return *this;
 }

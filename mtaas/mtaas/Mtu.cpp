@@ -40,12 +40,15 @@ ExtractorMTU& ExtractorMTU::operator = (const ExtractorMTU& element)
 
 void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *dirInfo ) 
 {
+	StationFile auxTs;
 	for( int i = 0; i < station->ts.size(); i++ ) {
-		station->ts[i].mtu.tbl = station->ts[i].mtu.read_tbl( ".TBL" );
-		station->ts[i].timeSeries = station->ts[i].mtu.read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
+		auxTs = station->ts[i];
+		auxTs = station->ts[i].mtu.get_parameters();
+		//station->ts[i].timeSeries = station->ts[i].mtu.read_mtu_data( station, i );
 		//auxTs.mtu->tbl = auxTs.mtu->read_tbl( ".TBL" );
 		//auxTs.timeSeries = auxTs.mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
 		//station->ts.push_back(auxTs);
+		station->ts[i] = auxTs;
 	}
 	
 	
@@ -58,92 +61,107 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	//Array<double> data1 = station[0].read_mtu_data( &station[0], inputTSn1 );
 	//Array<double> timeVector1 = station[0].get_mtu_time_vector( &station[0], inputTSn1 );
 	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
-	//
-	//station[0].mtuTsBand = station[0].get_phoenix_TS_band( inputTSn1 );
-	//station[0].isContinuous = station[0].is_acquisition_continuos( &timeVector1 );
 }
 
-Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, string input ) 
+StationFile ExtractorMTU::get_parameters()
 {
-	//ifstream infile( input.c_str(), ios::binary );
-	//if ( infile.good() )
- //   {
-	//	read_TSn_tag( infile, station, 0 );
- //   }
-	//infile.close();
-	//
-	//station->mtu->numberOfBytes = get_number_of_bytes( input );
-	//station->mtu->numberOfRecords = station->mtu->numberOfBytes / station->mtu->recordLength;
-	//station->mtu->numberOfSamples = station->mtu->numberOfBytes / station->mtu->recordLength * station->mtu->nScansPerRecord;
+	StationFile auxTs;
 
-	//Array<double> data( (size_t)station->mtu->numberOfSamples, (const index_t)station->numberOfChannels );
+	// read tbl an stores result in table tbl file
+	auxTs.mtu.tbl = auxTs.mtu.read_tbl();
 
-	//if( infile.good() )
-	//{
-	//	cout << "Reading time series data from " << input << endl << endl;
-	//	get_data( input, &data, station );
-	//}
-	//else
-	//{
-	//	//errorLog( "FILE TS", input );
-	//	cout << "Could not open " << input << endl << endl;
-	//}
-	//infile.close();
+	// put important parameters on auxTs to be returned
+	auxTs.exDipoleLength = auxTs.mtu.tbl.exln;
+	auxTs.eyDipoleLength = auxTs.mtu.tbl.eyln;
 
-	//Array<double> *data2;
-	//data2 = &data;
-	//return data2;
-
-	return (&Array<double>(1));
+	// read TSn first tag - filling of auxTs inside function
+	ifstream infile( this->tsnFile, ios::binary );
+	if ( infile.good() ) {
+		read_TSn_tag( infile, &auxTs, 0 );
+		infile.close();
+    }
+	
+	return auxTs;
 }
 
-void ExtractorMTU::read_TSn_tag( ifstream &infile, StationBase *station, int position )
+Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, size_t idx ) 
 {
-	//unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
-	//double sampledenom, sampleenum;
-	//char sampleunit;
+	std::string input = station->ts[idx].mtu.tsnFile;
 
-	//if( infile.is_open() == true )
-	//{
-	//	infile.seekg ( position );
-	//	infile.read((char *) CurrentTag, 32);
-	//	station->date.startSecond = int( CurrentTag[0] );
-	//	station->date.startMinute = int( CurrentTag[1] );
-	//	station->date.startHour  = int( CurrentTag[2] );
-	//	station->date.startDay = int( CurrentTag[3] );
-	//	station->date.startMonth = int( CurrentTag[4] );
-	//	station->date.startYear = int( CurrentTag[5] );
-	//	station->date.startYear = (2000 + station->date.startYear)*( station->date.startYear < 70 ) + ( 1900 + station->date.startYear)*( station->date.startYear >= 70 );
-	//	station->mtu->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
-	//	station->numberOfChannels = int( CurrentTag[12] );
-	//	station->mtu->tagLength = int( CurrentTag[13] );
-	//	if( station->mtu->tagLength != station->mtu->tagsize )
-	//		cout << "tagsize != taglength = " << station->mtu->tagLength << "\n" << 
-	//		"Change tagsize em mtu.h to " << station->mtu->tagLength << "\n";
-	//	station->mtu->sampleLength = int( CurrentTag[17] );
-	//	sampledenom = double( CurrentTag[19] * 256
-	//		+ CurrentTag[18] );
-	//	sampleunit = CurrentTag[20];
-	//	sampleenum;
-	//	switch (sampleunit)
-	//	{
-	//	case 0:
-	//		sampleenum = 1.0;
-	//		break;
-	//	case 1:
-	//		sampleenum = 60.0;
-	//		break;
-	//	case 2:
-	//		sampleenum = 3600.0;
-	//		break;
-	//	case 3:
-	//		sampleenum = 3600.0 * 24.0;
-	//		break;
-	//	}
-	//	station->ts->samplingFrequency = (size_t)(sampledenom / sampleenum);
-	//	station->mtu->recordLength = (int)(station->mtu->nScansPerRecord * station->numberOfChannels * station->mtu->sampleLength + station->mtu->tagLength);
-	//}
- //   delete[] CurrentTag;
+	ifstream infile( input, ios::binary );
+	if ( infile.good() )
+    {
+		read_TSn_tag( infile, &(station->ts[idx]), 0 );
+    }
+	infile.close();
+	
+	station->ts[idx].mtu.numberOfBytes = get_number_of_bytes( input );
+	station->ts[idx].mtu.numberOfRecords = station->ts[idx].mtu.numberOfBytes / station->ts[idx].mtu.recordLength;
+	station->ts[idx].mtu.numberOfSamples = station->ts[idx].mtu.numberOfBytes / station->ts[idx].mtu.recordLength * station->ts[idx].mtu.nScansPerRecord;
+
+	Array<double> data( (size_t)station->ts[idx].mtu.numberOfSamples, (const index_t)station->ts[idx].nChannels );
+
+	if( infile.good() )
+	{
+		cout << "Reading time series data from " << input << endl << endl;
+		get_data( input, &data, station );
+		infile.close();
+	}
+	else
+		cout << "Could not open " << input << endl << endl;
+
+	Array<double> *data2;
+	data2 = &data;
+	return data2;
+}
+
+void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
+{
+	unsigned char *CurrentTag = new unsigned char[this->tagsize];
+	double sampledenom, sampleenum;
+	char sampleunit;
+
+	if( infile.is_open() == true )
+	{
+		infile.seekg ( position );
+		infile.read((char *) CurrentTag, 32);
+		ts->date.startSecond = int( CurrentTag[0] );
+		ts->date.startMinute = int( CurrentTag[1] );
+		ts->date.startHour  = int( CurrentTag[2] );
+		ts->date.startDay = int( CurrentTag[3] );
+		ts->date.startMonth = int( CurrentTag[4] );
+		ts->date.startYear = int( CurrentTag[5] );
+		ts->date.startYear = (2000 + ts->date.startYear)*( ts->date.startYear < 70 ) + ( 1900 + ts->date.startYear)*( ts->date.startYear >= 70 );
+		this->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
+		ts->nChannels = int( CurrentTag[12] );
+		ts->mtu.tagLength = int( CurrentTag[13] );
+		if( ts->mtu.tagLength != ts->mtu.tagsize )
+			cout << "tagsize != taglength = " << ts->mtu.tagLength << "\n" << 
+			"Change tagsize em mtu.h to " << ts->mtu.tagLength << "\n";
+		ts->mtu.sampleLength = int( CurrentTag[17] );
+		sampledenom = double( CurrentTag[19] * 256
+			+ CurrentTag[18] );
+		sampleunit = CurrentTag[20];
+		sampleenum;
+		switch (sampleunit)
+		{
+		case 0:
+			sampleenum = 1.0;
+			break;
+		case 1:
+			sampleenum = 60.0;
+			break;
+		case 2:
+			sampleenum = 3600.0;
+			break;
+		case 3:
+			sampleenum = 3600.0 * 24.0;
+			break;
+		}
+		ts->samplingFrequency = (size_t)(sampledenom / sampleenum);
+		ts->mtu.recordLength = (int)(ts->mtu.nScansPerRecord * ts->nChannels * ts->mtu.sampleLength + ts->mtu.tagLength);
+	}
+    delete[] CurrentTag;
 }
 
 void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
@@ -262,11 +280,13 @@ int ExtractorMTU::byte_to_int( unsigned char first, unsigned char second, unsign
 	return (value);
 }
 
-table ExtractorMTU::read_tbl(string tblstr) {
-    table tbl;
+table ExtractorMTU::read_tbl() {
+    
+	table tbl;
+	std::string tblstr = this->tblFile;
 
     // open file
-	ifstream tblf(this->tblFile);
+	ifstream tblf(tblstr);
     if(tblf.fail()) {
         cout<<"can't open the tbl file "<<tblstr<<endl;
         exit(1);
