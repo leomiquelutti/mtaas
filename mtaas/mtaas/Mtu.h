@@ -13,6 +13,7 @@ using namespace std;
 
 class StationBase;
 class StationFile;
+class Channel;
 class DirectoryProperties;
 
 typedef short INT2;
@@ -126,11 +127,11 @@ private:
 	static bool		correct_types(void);
 	static void		cts2array( matCUDA::Array<Complex> *, std::string, index_t );
 	static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
-	void		get_data( StationFile &auxTs );
+	void		get_data( std::vector<Channel> &auxCh );
 	static int		get_number_of_bytes( std::string infile );
 	static bool		positioning( std::ifstream &tbl, char* label);
 	void		read_TSn_tag( ifstream &infile, StationFile *ts, size_t position );
-	void 	read_TSn_time_series( std::ifstream &infile, StationFile &auxTs, size_t counter );
+	void 	read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &auxCh, size_t counter );
 	static int		read_value( char *pos );
 };
 

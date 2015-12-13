@@ -98,18 +98,23 @@ StationFile ExtractorMTU::read_mtu_data( StationFile auxTs  )
 	auxTs.mtu.numberOfSamples = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength * auxTs.mtu.nScansPerRecord;
 
 	//Array<double> data( (size_t)auxTs.mtu.numberOfSamples, (const index_t)auxTs.nChannels );
+	std::vector<Channel> auxCh(auxTs.nChannels);
 	for( int i = 0; i < auxTs.nChannels; i++ )
-		auxTs.ch[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
+		auxCh[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
 
+	*this = auxTs.mtu;
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
-		get_data( auxTs );
+		get_data( auxCh );
 		infile.close();
 	}
 	else
 		cout << "Could not open " << input << endl << endl;
 
+	auxTs.ch = auxCh;
+	for( int i = 0; i < auxTs.nChannels; i++ )
+		delete auxCh[i].timeSeries;
 	return auxTs;
 }
 
@@ -210,36 +215,38 @@ int ExtractorMTU::get_number_of_bytes( string infile )
   return end - begin;
 }
 
-void ExtractorMTU::get_data( StationFile &auxTs )
+void ExtractorMTU::get_data( std::vector<Channel> &auxCh )
 {
-	ifstream infile( auxTs.mtu.tsnFile.c_str(), ios::binary );
-	if ( infile )
+	std::cout << this->tsnFile << std::endl;
+	ifstream infile( this->tsnFile.c_str(), ios::binary );
+	if ( infile.good() )
     {
 		int counter = 0;
-		while (infile.good() && counter < auxTs.mtu.numberOfRecords )
+		while (infile.good() && counter < this->numberOfRecords )
 		{
-			read_TSn_time_series( infile, auxTs, counter );
+			read_TSn_time_series( infile, auxCh, counter );
 			counter++;
 		}
     }
 }
 
-void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, StationFile &auxTs, size_t counter )
+void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &auxCh, size_t counter )
 {
-	unsigned char *CurrentTag = new unsigned char[auxTs.mtu.tagsize];
+	unsigned char *CurrentTag = new unsigned char[this->tagsize];
 	char *buffer, *currentbyte;
 
-	infile.read( (char *) CurrentTag, auxTs.mtu.tagsize );
-	buffer = new char[ auxTs.mtu.recordLength - auxTs.mtu.tagLength ];
-    infile.read( buffer, auxTs.mtu.recordLength - auxTs.mtu.tagLength );
+	infile.read( (char *) CurrentTag, this->tagsize );
+	buffer = new char[ this->recordLength - this->tagLength ];
+    infile.read( buffer, this->recordLength - this->tagLength );
     currentbyte = buffer;
 	int line;
-	for (int i = 0; i < auxTs.mtu.nScansPerRecord; i++ )
+	std::cout << this->nScansPerRecord << std::endl;
+	for (int i = 0; i < this->nScansPerRecord; i++ )
     {
-		auxTs.ch[0].timeSeries[line] = 1;
+		line = i + counter*this->nScansPerRecord;
+		auxCh[0].timeSeries[line] = 1;
 		//auxTs.ch[0].timeSeries(0)=1;
-		line = i + counter*auxTs.mtu.nScansPerRecord;
-		auxTs.ch[1].timeSeries[0](line) = read_value( currentbyte );
+		auxCh[1].timeSeries[0](line) = read_value( currentbyte );
 		//(*data)(line,3) = read_value( currentbyte );
   //      currentbyte += auxTs->mtu.sampleLength;
 		//(*data)(line,4) = read_value( currentbyte );
