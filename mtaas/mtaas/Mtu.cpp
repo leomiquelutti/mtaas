@@ -43,8 +43,8 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	StationFile auxTs;
 	for( int i = 0; i < station->ts.size(); i++ ) {
 		auxTs = station->ts[i];
-		auxTs = station->ts[i].mtu.get_parameters();
-		//station->ts[i].timeSeries = station->ts[i].mtu.read_mtu_data( station, i );
+		auxTs = station->ts[i].mtu.get_parameters( auxTs );
+		auxTs = station->ts[i].mtu.read_mtu_data( auxTs );
 		//auxTs.mtu->tbl = auxTs.mtu->read_tbl( ".TBL" );
 		//auxTs.timeSeries = auxTs.mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
 		//station->ts.push_back(auxTs);
@@ -63,10 +63,8 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
 }
 
-StationFile ExtractorMTU::get_parameters()
+StationFile ExtractorMTU::get_parameters( StationFile auxTs )
 {
-	StationFile auxTs;
-
 	// read tbl an stores result in table tbl file
 	auxTs.mtu.tbl = auxTs.mtu.read_tbl();
 
@@ -84,35 +82,35 @@ StationFile ExtractorMTU::get_parameters()
 	return auxTs;
 }
 
-Array<double>* ExtractorMTU::read_mtu_data( StationBase *station, size_t idx ) 
+StationFile ExtractorMTU::read_mtu_data( StationFile auxTs  )
 {
-	std::string input = station->ts[idx].mtu.tsnFile;
+	std::string input = auxTs.mtu.tsnFile;
 
 	ifstream infile( input, ios::binary );
 	if ( infile.good() )
     {
-		read_TSn_tag( infile, &(station->ts[idx]), 0 );
+		read_TSn_tag( infile, &auxTs, 0 );
+		infile.close();
     }
-	infile.close();
 	
-	station->ts[idx].mtu.numberOfBytes = get_number_of_bytes( input );
-	station->ts[idx].mtu.numberOfRecords = station->ts[idx].mtu.numberOfBytes / station->ts[idx].mtu.recordLength;
-	station->ts[idx].mtu.numberOfSamples = station->ts[idx].mtu.numberOfBytes / station->ts[idx].mtu.recordLength * station->ts[idx].mtu.nScansPerRecord;
+	auxTs.mtu.numberOfBytes = get_number_of_bytes( input );
+	auxTs.mtu.numberOfRecords = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength;
+	auxTs.mtu.numberOfSamples = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength * auxTs.mtu.nScansPerRecord;
 
-	Array<double> data( (size_t)station->ts[idx].mtu.numberOfSamples, (const index_t)station->ts[idx].nChannels );
+	//Array<double> data( (size_t)auxTs.mtu.numberOfSamples, (const index_t)auxTs.nChannels );
+	for( int i = 0; i < auxTs.nChannels; i++ )
+		auxTs.ch[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
 
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
-		get_data( input, &data, station );
+		get_data( auxTs );
 		infile.close();
 	}
 	else
 		cout << "Could not open " << input << endl << endl;
 
-	Array<double> *data2;
-	data2 = &data;
-	return data2;
+	return auxTs;
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -212,46 +210,49 @@ int ExtractorMTU::get_number_of_bytes( string infile )
   return end - begin;
 }
 
-void ExtractorMTU::get_data( const string filename, Array<double> *data, StationBase *station )
+void ExtractorMTU::get_data( StationFile &auxTs )
 {
-	//ifstream infile( filename.c_str(), ios::binary );
-	//if ( infile )
- //   {
-	//	int counter = 0;
-	//	while (infile.good() && counter < station->mtu->numberOfRecords )
-	//	{
-	//		read_TSn_time_series( infile, counter, data, station );
-	//		counter++;
-	//	}
- //   }
+	ifstream infile( auxTs.mtu.tsnFile.c_str(), ios::binary );
+	if ( infile )
+    {
+		int counter = 0;
+		while (infile.good() && counter < auxTs.mtu.numberOfRecords )
+		{
+			read_TSn_time_series( infile, auxTs, counter );
+			counter++;
+		}
+    }
 }
 
-void ExtractorMTU::read_TSn_time_series( ifstream &infile, int counter, Array<double> *data, StationBase *station )
+void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, StationFile &auxTs, size_t counter )
 {
-//	unsigned char *CurrentTag = new unsigned char[station->mtu->tagsize];
-//	char *buffer, *currentbyte;
-//
-//	infile.read( (char *) CurrentTag, station->mtu->tagsize );
-//	buffer = new char[ station->mtu->recordLength - station->mtu->tagLength ];
-//    infile.read( buffer, station->mtu->recordLength - station->mtu->tagLength );
-//    currentbyte = buffer;
-//	int line;
-//	for (int i = 0; i < station->mtu->nScansPerRecord; i++ )
-//    {
-//		line = i + counter*station->mtu->nScansPerRecord;
-//		(*data)(line,3) = read_value( currentbyte );
-//        currentbyte += station->mtu->sampleLength;
-//		(*data)(line,4) = read_value( currentbyte );
-//        currentbyte += station->mtu->sampleLength;
-//		(*data)(line,0) = read_value( currentbyte );
-//        currentbyte += station->mtu->sampleLength;
-//		(*data)(line,1) = read_value( currentbyte );
-//        currentbyte += station->mtu->sampleLength;
-//		(*data)(line,2) = read_value( currentbyte );
-//        currentbyte += station->mtu->sampleLength;
-//    }
-//    delete[] buffer;
-//    delete[] CurrentTag;
+	unsigned char *CurrentTag = new unsigned char[auxTs.mtu.tagsize];
+	char *buffer, *currentbyte;
+
+	infile.read( (char *) CurrentTag, auxTs.mtu.tagsize );
+	buffer = new char[ auxTs.mtu.recordLength - auxTs.mtu.tagLength ];
+    infile.read( buffer, auxTs.mtu.recordLength - auxTs.mtu.tagLength );
+    currentbyte = buffer;
+	int line;
+	for (int i = 0; i < auxTs.mtu.nScansPerRecord; i++ )
+    {
+		auxTs.ch[0].timeSeries[line] = 1;
+		//auxTs.ch[0].timeSeries(0)=1;
+		line = i + counter*auxTs.mtu.nScansPerRecord;
+		auxTs.ch[1].timeSeries[0](line) = read_value( currentbyte );
+		//(*data)(line,3) = read_value( currentbyte );
+  //      currentbyte += auxTs->mtu.sampleLength;
+		//(*data)(line,4) = read_value( currentbyte );
+  //      currentbyte += auxTs->mtu.sampleLength;
+		//(*data)(line,0) = read_value( currentbyte );
+  //      currentbyte += auxTs->mtu.sampleLength;
+		//(*data)(line,1) = read_value( currentbyte );
+  //      currentbyte += auxTs->mtu.sampleLength;
+		//(*data)(line,2) = read_value( currentbyte );
+  //      currentbyte += auxTs->mtu.sampleLength;
+    }
+    delete[] buffer;
+    delete[] CurrentTag;
 }
 
 int ExtractorMTU::read_value( char *pos )

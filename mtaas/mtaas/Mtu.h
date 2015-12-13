@@ -98,8 +98,8 @@ public:
 	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
 	phoenixTsBand_t get_phoenix_TS_band( std::string fileName );
 	matCUDA::Array<Complex>	read_cts_file( StationBase *station, std::string ctsFileName );
-	matCUDA::Array<double>	*read_mtu_data( StationBase *station, size_t idx );
-	StationFile get_parameters();
+	StationFile read_mtu_data( StationFile auxTs  );
+	StationFile get_parameters( StationFile auxTs );
 	table			read_tbl();
 
 private:
@@ -126,11 +126,11 @@ private:
 	static bool		correct_types(void);
 	static void		cts2array( matCUDA::Array<Complex> *, std::string, index_t );
 	static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
-	static void		get_data( const std::string filename, matCUDA::Array<double> *data, StationBase *station );
+	void		get_data( StationFile &auxTs );
 	static int		get_number_of_bytes( std::string infile );
 	static bool		positioning( std::ifstream &tbl, char* label);
 	void		read_TSn_tag( ifstream &infile, StationFile *ts, size_t position );
-	static void		read_TSn_time_series( std::ifstream &infile, int counter, matCUDA::Array<double> *data, StationBase *station );
+	void 	read_TSn_time_series( std::ifstream &infile, StationFile &auxTs, size_t counter );
 	static int		read_value( char *pos );
 };
 
