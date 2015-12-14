@@ -29,9 +29,14 @@ int main()
 	// get stations name, path and type
 	std::vector<StationBase> station = dirInfo.initialize_stations();
 
-	// read time-series
+	// read raw time-series
+	// TODO - define timeVector properly for RR
 	for( int i = 0; i < station.size(); i++ )
 		station[i].read_time_series( &dirInfo );
+
+	// extract corrected (to physical units) Fourier coefficients 
+	for( int i = 0; i < station.size(); i++ )
+		station[i].get_FCs();
 
 	// delete everything allocated
 	// TODO

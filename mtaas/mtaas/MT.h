@@ -94,6 +94,7 @@ private:
 	double declinationInput;
 };
 
+// class containing info from each Channel within each TS
 class Channel
 {
 public:
@@ -103,15 +104,15 @@ public:
 		gain(1) {};
 
 	~Channel() {
-		delete arCoeff;
-		delete correction;
-		delete timeSeries;
+		//delete arCoeff;
+		//delete correction;
+		//delete timeSeries;
 	}
 
 	Channel(const Channel& element) {*this = element;};
     Channel& operator = (const Channel& element);
 	
-	matCUDA::Array<double>	*timeSeries;
+	matCUDA::Array<double> *timeSeries;
 	matCUDA::Array<double> *arCoeff;
 	matCUDA::Array<double> *correction;
 	double countConversion;
@@ -121,8 +122,6 @@ public:
 	double gain;
 };
 
-
-
 // class containing info from each TS within station
 class StationFile
 {
@@ -130,7 +129,7 @@ public:
 
 	StationFile() {};
 	~StationFile() {
-		delete timeVector;  };
+		/*delete timeVector; */ };
 
 	StationFile(const StationFile& element) {*this = element;};
     StationFile& operator = (const StationFile& element);
@@ -166,8 +165,7 @@ public:
 	
 	StationBase() :
 		stationName("NULL"),
-		path("NULL"),
-		amountOfTs(0) {};
+		path("NULL") {};
 
 	StationBase(const StationBase& element) {*this = element;};
     StationBase& operator = (const StationBase& element);
@@ -176,13 +174,15 @@ public:
 	std::string		path;
 	FILE_TYPE		fileType;
 	Position		position;
-	size_t			amountOfTs;
 
 	// one StationFile for each time-series (or analogous) file
 	std::vector<StationFile> ts;
 
 	// function to read time-series
 	void			read_time_series( DirectoryProperties *dirInfo );
+
+	// function to extract corrected FC coefficients to evaluate transfer functions
+	void			get_FCs();
 };
 
 // utils

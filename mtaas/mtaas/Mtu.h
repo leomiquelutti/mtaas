@@ -99,7 +99,7 @@ public:
 	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
 	phoenixTsBand_t get_phoenix_TS_band( std::string fileName );
 	matCUDA::Array<Complex>	read_cts_file( StationBase *station, std::string ctsFileName );
-	StationFile read_mtu_data( StationFile auxTs  );
+	void read_mtu_data( StationFile &auxTs  );
 	StationFile get_parameters( StationFile auxTs );
 	table			read_tbl();
 
@@ -109,7 +109,6 @@ private:
 	double			FS;// = 0x7FFFFF;  // full scale (normalizing the ADN)
 	int				nScansPerRecord;
 	int				numberOfBytes;
-	int				nChannels;
 	int				numberOfRecords;
 	int				numberOfSamples;
 	int				recordLength;

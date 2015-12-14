@@ -24,7 +24,7 @@ ExtractorMTU& ExtractorMTU::operator = (const ExtractorMTU& element)
 	this->tsnFile = element.tsnFile;
 	this->FS = element.FS;
 	this->mtuTsBand = element.mtuTsBand;
-	this->nChannels = element.nChannels;
+	//this->nChannels = element.nChannels;
 	this->nScansPerRecord = element.nScansPerRecord;
 	this->numberOfBytes = element.numberOfBytes;
 	this->numberOfRecords = element.numberOfRecords;
@@ -43,24 +43,14 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	StationFile auxTs;
 	for( int i = 0; i < station->ts.size(); i++ ) {
 		auxTs = station->ts[i];
+
+		// get tbl parameters
 		auxTs = station->ts[i].mtu.get_parameters( auxTs );
-		auxTs = station->ts[i].mtu.read_mtu_data( auxTs );
-		//auxTs.mtu->tbl = auxTs.mtu->read_tbl( ".TBL" );
-		//auxTs.timeSeries = auxTs.mtu->read_mtu_data( station, string("C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu\\01-132\\1282407A.TS5") );
-		//station->ts.push_back(auxTs);
+
+		station->ts[i].mtu.read_mtu_data( auxTs );
+
 		station->ts[i] = auxTs;
 	}
-	
-	
-	
-	
-	
-	
-	//this->mtu->tbl = station[0].read_tbl( inputTbl1 );
-	//station[0].tbl = station[0].read_tbl( inputTbl1 );
-	//Array<double> data1 = station[0].read_mtu_data( &station[0], inputTSn1 );
-	//Array<double> timeVector1 = station[0].get_mtu_time_vector( &station[0], inputTSn1 );
-	//Array<Complex> correctionToData1 = station[0].read_cts_file( &station[0], inputCts );
 }
 
 StationFile ExtractorMTU::get_parameters( StationFile auxTs )
@@ -82,7 +72,7 @@ StationFile ExtractorMTU::get_parameters( StationFile auxTs )
 	return auxTs;
 }
 
-StationFile ExtractorMTU::read_mtu_data( StationFile auxTs  )
+void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 {
 	std::string input = auxTs.mtu.tsnFile;
 
@@ -101,8 +91,10 @@ StationFile ExtractorMTU::read_mtu_data( StationFile auxTs  )
 	std::vector<Channel> auxCh(auxTs.nChannels);
 	for( int i = 0; i < auxTs.nChannels; i++ )
 		auxCh[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
-
+		//auxCh[i].timeSeries = new Array<double>(5);
+	
 	*this = auxTs.mtu;
+	//std::cout << auxTs.mtu.numberOfSamples << endl;
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
@@ -113,9 +105,9 @@ StationFile ExtractorMTU::read_mtu_data( StationFile auxTs  )
 		cout << "Could not open " << input << endl << endl;
 
 	auxTs.ch = auxCh;
-	for( int i = 0; i < auxTs.nChannels; i++ )
-		delete auxCh[i].timeSeries;
-	return auxTs;
+	//for( int i = 0; i < auxTs.nChannels; i++ )
+	//	delete auxCh[i].timeSeries;
+	//return auxTs;
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -135,7 +127,7 @@ void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t posit
 		ts->date.startMonth = int( CurrentTag[4] );
 		ts->date.startYear = int( CurrentTag[5] );
 		ts->date.startYear = (2000 + ts->date.startYear)*( ts->date.startYear < 70 ) + ( 1900 + ts->date.startYear)*( ts->date.startYear >= 70 );
-		this->nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
+		ts->mtu.nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
 		ts->nChannels = int( CurrentTag[12] );
 		ts->mtu.tagLength = int( CurrentTag[13] );
 		if( ts->mtu.tagLength != ts->mtu.tagsize )
@@ -217,11 +209,11 @@ int ExtractorMTU::get_number_of_bytes( string infile )
 
 void ExtractorMTU::get_data( std::vector<Channel> &auxCh )
 {
-	std::cout << this->tsnFile << std::endl;
 	ifstream infile( this->tsnFile.c_str(), ios::binary );
 	if ( infile.good() )
     {
 		int counter = 0;
+		//cout << this->numberOfRecords << endl;
 		while (infile.good() && counter < this->numberOfRecords )
 		{
 			read_TSn_time_series( infile, auxCh, counter );
@@ -240,24 +232,57 @@ void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Chan
     infile.read( buffer, this->recordLength - this->tagLength );
     currentbyte = buffer;
 	int line;
-	std::cout << this->nScansPerRecord << std::endl;
-	for (int i = 0; i < this->nScansPerRecord; i++ )
-    {
-		line = i + counter*this->nScansPerRecord;
-		auxCh[0].timeSeries[line] = 1;
-		//auxTs.ch[0].timeSeries(0)=1;
-		auxCh[1].timeSeries[0](line) = read_value( currentbyte );
-		//(*data)(line,3) = read_value( currentbyte );
-  //      currentbyte += auxTs->mtu.sampleLength;
-		//(*data)(line,4) = read_value( currentbyte );
-  //      currentbyte += auxTs->mtu.sampleLength;
-		//(*data)(line,0) = read_value( currentbyte );
-  //      currentbyte += auxTs->mtu.sampleLength;
-		//(*data)(line,1) = read_value( currentbyte );
-  //      currentbyte += auxTs->mtu.sampleLength;
-		//(*data)(line,2) = read_value( currentbyte );
-  //      currentbyte += auxTs->mtu.sampleLength;
-    }
+
+	// TODO - IMPROVE!
+
+	// for nChannels = 5
+			//cout << this->nScansPerRecord << endl;
+	if( auxCh.size() == 5 ) {
+		for (int i = 0; i < this->nScansPerRecord; i++ ) {
+			line = i + counter*this->nScansPerRecord;
+			auxCh[3].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[4].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+		}
+	}
+	// for nChannels = 4 - no Hz
+	else if( auxCh.size() == 4 ) {
+		for (int i = 0; i < this->nScansPerRecord; i++ ) {
+			line = i + counter*this->nScansPerRecord;
+			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[3].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+		}
+	}
+	// for nChannels = 3 - just Hz
+	else if( auxCh.size() == 4 ) {
+		for (int i = 0; i < this->nScansPerRecord; i++ ) {
+			line = i + counter*this->nScansPerRecord;
+			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			currentbyte += this->sampleLength;
+		}
+	}
+	else {
+		std::cout << "number of channels different from 3, 4 or 5. Terminating the program" << std::endl;
+		exit(77);
+	}
+
     delete[] buffer;
     delete[] CurrentTag;
 }

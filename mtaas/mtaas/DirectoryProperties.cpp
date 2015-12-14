@@ -249,7 +249,6 @@ void MtuDirInfo::fill_in_dir_mtu_info( StationBase *station, size_t nTbl )
 						}
 					}
 				}
-				station->amountOfTs = tsCounter;
 			}
 			else
 			{

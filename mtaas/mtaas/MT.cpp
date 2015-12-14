@@ -4,7 +4,6 @@
 
 StationBase& StationBase::operator = (const StationBase& element)
 {
-	this->amountOfTs = element.amountOfTs;
 	this->fileType = element.fileType;
 	this->path = element.path;
 	this->position = element.position;
@@ -54,26 +53,6 @@ std::string Date::getDateStr()
 		+ std::to_string(startSecond);
 }
 
-//bool StationBase::is_acquisition_continuos( Array<double> *timeVector )
-//{
-//	// check consistency
-//	for( int i = 1; i < timeVector->GetDescriptor().GetDim( 0 ); i++ ) {
-//		if( (*timeVector)(i,0) - (*timeVector)(i-1,0) < 1 )
-//		{
-//			std::cout << "There's a problem in time vector" <<std::endl;
-//			std::cout << "timeVector(" << i << ") - timeVector(" << i-1 << ") < 1" << std::endl;
-//			exit(-42);
-//		}
-//	}
-//
-//	// check continuity
-//	for( int i = 1; i < timeVector->GetDescriptor().GetDim( 0 ); i++ ) {
-//		if( (*timeVector)(i,0) - (*timeVector)(i-1,0) > 1 )
-//			return false;
-//	}
-//	return true;
-//}
-
 void StationBase::read_time_series( DirectoryProperties *dirInfo )
 {
 	switch(fileType) 
@@ -83,6 +62,10 @@ void StationBase::read_time_series( DirectoryProperties *dirInfo )
 	//case FILE_TYPE_ADU_07:
 		//ExtractorADU::read_time_series( this, dirInfo );
 	}
+}
+
+void StationBase::get_FCs()
+{
 }
 
 void Utils::delete_all( std::vector<StationBase> *station )
