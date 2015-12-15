@@ -51,6 +51,19 @@ typedef enum {
 	FILE_TYPE_ADU_07
 } FILE_TYPE;
 
+// identify file type
+typedef enum {
+	CHANNEL_TYPE_H = 1,
+	CHANNEL_TYPE_E
+} CHANNEL_TYPE;
+
+// identify file orientation (or label)
+typedef enum {
+	CHANNEL_ORIENTATION_X = 1,
+	CHANNEL_ORIENTATION_Y,
+	CHANNEL_ORIENTATION_Z,
+} CHANNEL_ORIENTATION;
+
 // sets whether the segment length will be variable or fixed (with decimation)
 typedef enum {
 	FIXED_WINDOW_LENGTH = 1,
@@ -101,7 +114,8 @@ public:
 	
 	Channel() : 
 		countConversion(1),
-		gain(1) {};
+		gain(1),
+		dipoleLength(1) {};
 
 	~Channel() {
 		//delete arCoeff;
@@ -114,11 +128,16 @@ public:
 	
 	matCUDA::Array<double> *timeSeries;
 	matCUDA::Array<double> *arCoeff;
-	matCUDA::Array<double> *correction;
+	matCUDA::Array<ComplexDouble> *correction;
+	matCUDA::Array<double>	*correctionFreqs;
+	matCUDA::Array<ComplexDouble> *fc;
 	double countConversion;
 	double orientationHor;
 	double orientationVer;
+	double dipoleLength;
 	std::string name;
+	CHANNEL_TYPE channel_type;
+	CHANNEL_ORIENTATION channel_orientation;
 	double gain;
 };
 
@@ -134,7 +153,6 @@ public:
 	StationFile(const StationFile& element) {*this = element;};
     StationFile& operator = (const StationFile& element);
 
-	// raw data
 	matCUDA::Array<double>	*timeVector;
 
 	// parameters for processing

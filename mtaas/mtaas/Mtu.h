@@ -76,10 +76,13 @@ typedef enum{
 class ExtractorMTU
 {
 public:
-	ExtractorMTU() {
-		tagsize = 32;
-		FS = 0x7FFFFF;
-	}
+	ExtractorMTU():
+		empirical_factor(1/8),
+		tagsize(32),
+		FS(0x7FFFFF) {
+			ECV = 1.E6*empirical_factor;    // convert V/m to mV/km
+			HCV = 1.E9;     // convert T to nT
+		}
 
 	ExtractorMTU(const ExtractorMTU& element) {*this = element;};
 
@@ -95,18 +98,20 @@ public:
 	table			tbl;
 
 	// functions
-	static void read_time_series( StationBase *station, DirectoryProperties *dirInfo );
+	static void				read_time_series( StationBase *station, DirectoryProperties *dirInfo );
 	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
-	phoenixTsBand_t get_phoenix_TS_band( std::string fileName );
-	matCUDA::Array<Complex>	read_cts_file( StationBase *station, std::string ctsFileName );
-	void read_mtu_data( StationFile &auxTs  );
-	StationFile get_parameters( StationFile auxTs );
-	table			read_tbl();
+	phoenixTsBand_t			get_phoenix_TS_band( std::string fileName );
+	void					read_mtu_data( StationFile &auxTs  );
+	StationFile				get_parameters( StationFile auxTs );
+	table					read_tbl();
 
 private:
 
 	// variables
-	double			FS;// = 0x7FFFFF;  // full scale (normalizing the ADN)
+	double			empirical_factor; 
+	double			ECV;    // convert V/m to mV/km
+	double			HCV;     // convert T to nT
+	long			FS;  // full scale (normalizing the ADN)
 	int				nScansPerRecord;
 	int				numberOfBytes;
 	int				numberOfRecords;
@@ -124,14 +129,16 @@ private:
 	static double	conv_lat(const char* LATG);
 	static double	conv_lon(const char* LNGG);
 	static bool		correct_types(void);
-	static void		cts2array( matCUDA::Array<Complex> *, std::string, index_t );
+	static void		cts2array( std::vector<Channel> &, std::string, index_t );
 	static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
-	void		get_data( std::vector<Channel> &auxCh );
+	void			get_data( std::vector<Channel> &auxCh );
 	static int		get_number_of_bytes( std::string infile );
 	static bool		positioning( std::ifstream &tbl, char* label);
-	void		read_TSn_tag( ifstream &infile, StationFile *ts, size_t position );
-	void 	read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &auxCh, size_t counter );
+	void			read_TSn_tag( ifstream &infile, StationFile *ts, size_t position );
+	void 			read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &auxCh, size_t counter );
 	static int		read_value( char *pos );
+	void			finish_channel_details( std::vector<Channel> &auxCh  );
+	void			read_cts_file( std::vector<Channel> &auxCh );
 };
 
 #endif // MTU_H

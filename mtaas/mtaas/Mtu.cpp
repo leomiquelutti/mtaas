@@ -24,7 +24,6 @@ ExtractorMTU& ExtractorMTU::operator = (const ExtractorMTU& element)
 	this->tsnFile = element.tsnFile;
 	this->FS = element.FS;
 	this->mtuTsBand = element.mtuTsBand;
-	//this->nChannels = element.nChannels;
 	this->nScansPerRecord = element.nScansPerRecord;
 	this->numberOfBytes = element.numberOfBytes;
 	this->numberOfRecords = element.numberOfRecords;
@@ -42,13 +41,17 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 {
 	StationFile auxTs;
 	for( int i = 0; i < station->ts.size(); i++ ) {
+
+		// initialize auxTs
 		auxTs = station->ts[i];
 
-		// get tbl parameters
+		// get some parameters
 		auxTs = station->ts[i].mtu.get_parameters( auxTs );
 
+		// read raw time-series
 		station->ts[i].mtu.read_mtu_data( auxTs );
 
+		// stores all results in station->ts[i]
 		station->ts[i] = auxTs;
 	}
 }
@@ -61,6 +64,8 @@ StationFile ExtractorMTU::get_parameters( StationFile auxTs )
 	// put important parameters on auxTs to be returned
 	auxTs.exDipoleLength = auxTs.mtu.tbl.exln;
 	auxTs.eyDipoleLength = auxTs.mtu.tbl.eyln;
+
+
 
 	// read TSn first tag - filling of auxTs inside function
 	ifstream infile( this->tsnFile, ios::binary );
@@ -87,14 +92,13 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 	auxTs.mtu.numberOfRecords = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength;
 	auxTs.mtu.numberOfSamples = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength * auxTs.mtu.nScansPerRecord;
 
-	//Array<double> data( (size_t)auxTs.mtu.numberOfSamples, (const index_t)auxTs.nChannels );
+	// allocate time-series memory
 	std::vector<Channel> auxCh(auxTs.nChannels);
-	for( int i = 0; i < auxTs.nChannels; i++ )
+	for( int i = 0; i < auxCh.size(); i++ )
 		auxCh[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
-		//auxCh[i].timeSeries = new Array<double>(5);
 	
+	// get mtu raw data
 	*this = auxTs.mtu;
-	//std::cout << auxTs.mtu.numberOfSamples << endl;
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
@@ -103,11 +107,112 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 	}
 	else
 		cout << "Could not open " << input << endl << endl;
+	
+	// finishes filling channel details, as gain, orientation, count conversion, etc
+	this->finish_channel_details( auxCh );
+
+	// fill in correction vectors
 
 	auxTs.ch = auxCh;
-	//for( int i = 0; i < auxTs.nChannels; i++ )
-	//	delete auxCh[i].timeSeries;
-	//return auxTs;
+}
+
+void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
+{
+	// hx
+	auxCh[0].channel_type = CHANNEL_TYPE_H;
+	auxCh[0].channel_orientation = CHANNEL_ORIENTATION_X;
+	auxCh[0].name = "hx";
+	
+	// hy
+	auxCh[1].channel_type = CHANNEL_TYPE_H;
+	auxCh[1].channel_orientation = CHANNEL_ORIENTATION_Y;
+	auxCh[1].name = "hy";
+
+	if( auxCh.size() == 5 ) {
+		// hz
+		auxCh[2].channel_type = CHANNEL_TYPE_H;
+		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_Z;
+		auxCh[2].name = "hz";
+
+		// ex
+		auxCh[3].channel_type = CHANNEL_TYPE_E;
+		auxCh[3].channel_orientation = CHANNEL_ORIENTATION_X;
+		auxCh[3].name = "ex";
+
+		// ey
+		auxCh[4].channel_type = CHANNEL_TYPE_E;
+		auxCh[4].channel_orientation = CHANNEL_ORIENTATION_Y;
+		auxCh[4].name = "ey";
+	}
+	else if( auxCh.size() == 4 ) {
+		// ex
+		auxCh[2].channel_type = CHANNEL_TYPE_E;
+		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_X;
+		auxCh[2].name = "ex";
+
+		// ey
+		auxCh[3].channel_type = CHANNEL_TYPE_E;
+		auxCh[3].channel_orientation = CHANNEL_ORIENTATION_Y;
+		auxCh[3].name = "ey";
+	}
+	else if( auxCh.size() == 3 ) {
+		// hz
+		auxCh[2].channel_type = CHANNEL_TYPE_H;
+		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_Z;
+		auxCh[2].name = "hz";
+	}
+	else {
+		std::cout << "number of channels different than 3, 4 or 5. terminating the program" << std::endl;
+		exit(80);
+	}
+
+	// fill in others info
+	for( int i = 0; i < auxCh.size(); i++ ) {
+
+		// magnetic
+		if( auxCh[i].channel_type == CHANNEL_TYPE_H ) {
+
+			// x
+			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				auxCh[i].orientationHor = this->tbl.hazm; // azimuth related to true north
+				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			}
+
+			// y
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				auxCh[i].orientationHor = this->tbl.hazm + 90; // azimuth related to true north
+				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			}
+
+			// z
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Z ) {
+				auxCh[i].orientationHor = 0; // azimuth related to true north
+				auxCh[i].orientationVer = 90; // assumed to be directed to earth's center
+			}
+
+			auxCh[i].gain = this->tbl.hgn;
+			auxCh[i].countConversion = this->HCV/this->FS;
+		}
+
+		// electric
+		else if( auxCh[i].channel_type == CHANNEL_TYPE_E ) {
+
+			// x
+			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				auxCh[i].dipoleLength = this->tbl.exln/1000; // dipole length in km
+				auxCh[i].orientationHor = this->tbl.eazm; // azimuth related to true north
+			}
+
+			// y
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				auxCh[i].dipoleLength = this->tbl.eyln/1000; // dipole length in km
+				auxCh[i].orientationHor = this->tbl.eazm + 90; // azimuth related to true north
+			}
+			
+			auxCh[i].gain = this->tbl.egn;
+			auxCh[i].countConversion = this->ECV/this->FS/auxCh[i].dipoleLength;
+		}
+	}
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -797,50 +902,53 @@ double ExtractorMTU::conv_lon(const char* LNGG) {
     return signal*(deg+min/60.);
 }
 
-Array<Complex> ExtractorMTU::read_cts_file( StationBase *station, string ctsFileName )
+void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 {
-	//ifstream in(ctsFileName);
-	//if(!in) {
- //       cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
- //       exit(1);
- //   }
-	//    
-	//string line;
+	std::string ctsFileName = this->ctsFile;
 
-	//// detect beginning of data in cts file
- //   while(line.find( '/' ) == string::npos)
-	//	getline(in,line);
-	//
-	//size_t numberOfPoints = 0;
-	//while(in.eof() == false) {
-	//	getline(in,line);
-	//	numberOfPoints++;
-	//}
-	//in.close();
+	ifstream in(ctsFileName);
+	if(!in) {
+        cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
+        exit(10);
+    }
+	    
+	string line;
 
-	//Array<Complex> result( numberOfPoints-1,  station->numberOfChannels + 2 );
-	//in.open(ctsFileName);
-	//if(!in) {
- //       cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
- //       exit(1);
- //   }
+	// detect beginning of data in cts file
+    while(line.find( '/' ) == string::npos)
+		getline(in,line);
+	
+	size_t numberOfPoints = 0;
+	while(in.eof() == false) {
+		getline(in,line);
+		numberOfPoints++;
+	}
+	in.close();
 
-	//// detect beginning of data in cts file
- //   while(line.find( '/' ) == string::npos)
-	//	getline(in,line);
+	// allocate memory for each channel's correction vector
+	for( int i = 0; i < auxCh.size(); i++ ) {
+		auxCh[i].correction = new Array<ComplexDouble>( numberOfPoints-1 );
+		auxCh[i].correctionFreqs = new Array<double>( numberOfPoints-1 );
+	}
 
-	//// fills in result with correction values
-	//for( int i = 0; i < result.GetDescriptor().GetDim(0); i++ ) {
-	//	getline(in,line);
-	//	cts2array( &result, line, i );		
-	//}
+	in.open(ctsFileName);
+	if(!in) {
+        cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
+        exit(10);
+    }
 
-	//return result;
+	// detect beginning of data in cts file
+    while(line.find( '/' ) == string::npos)
+		getline(in,line);
 
-	return 0;
+	// fills in result with correction values
+	for( int i = 0; i < numberOfPoints-1; i++ ) {
+		getline(in,line);
+		cts2array( auxCh, line, i );		
+	}
 }
 
-void ExtractorMTU::cts2array( Array<Complex> *data, string line, index_t idx )
+void ExtractorMTU::cts2array( std::vector<Channel> &auxCh, string line, index_t idx )
 {
 	std::stringstream istr(line.c_str());
     double freq, real, imag;
@@ -853,14 +961,14 @@ void ExtractorMTU::cts2array( Array<Complex> *data, string line, index_t idx )
 	if (istr.peek() == ',')
 			istr.ignore();
 
-	for( int i = 2; i < data->GetDescriptor().GetDim(1); i++ ) {
+	for( int i = 0; i < auxCh.size(); i++ ) {
 		if (istr.peek() == ',')
 			istr.ignore();
 		istr >> real;
 		if (istr.peek() == ',')
 			istr.ignore();
 		istr >> imag;
-		(*data)( idx, i ) = Complex( real, imag );
+		auxCh[i].correction[0]( idx ) = Complex( real, imag );
 	}
 }
 
