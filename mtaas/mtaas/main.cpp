@@ -18,8 +18,9 @@
 int main()
 {
 	// INPUTS
-	TS_TO_FFT ts_to_fft = FIXED_WINDOW_LENGTH;
+	TS_TO_FFT_TYPE ts2fft_type = FIXED_WINDOW_LENGTH;
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;
+	RR_OR_SS_TYPE rrorss_type = SINGLE_SITE;
 	std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu";
 	//std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu";
 
@@ -34,9 +35,22 @@ int main()
 	for( int i = 0; i < station.size(); i++ )
 		station[i].read_time_series( &dirInfo );
 
+	//// checkouts
+	//for( int istn = 0; istn < station.size(); istn++ ) {
+	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {
+	//		for( int irow = 0; irow < station[istn].ts[its].ch[0].correctionFreqs[0].getDim(0); irow++ ) {
+	//			std::cout << station[istn].ts[its].ch[0].correctionFreqs[0](irow) << " ";
+	//			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )				
+	//				std::cout << station[istn].ts[its].ch[ich].correction[0](irow) << " ";
+	//			std::cout << std::endl;
+	//		}
+	//	}
+	//}
+
 	// extract corrected (to physical units) Fourier coefficients 
-	for( int i = 0; i < station.size(); i++ )
-		station[i].get_FCs();
+	//for( int i = 0; i < station.size(); i++ )
+	//	station[i].get_FCs( ts2fft );
+	StationBase::get_FCs( station, ts2fft_type, rrorss_type );
 
 	// delete everything allocated
 	// TODO

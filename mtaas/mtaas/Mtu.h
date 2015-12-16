@@ -99,11 +99,6 @@ public:
 
 	// functions
 	static void				read_time_series( StationBase *station, DirectoryProperties *dirInfo );
-	matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
-	phoenixTsBand_t			get_phoenix_TS_band( std::string fileName );
-	void					read_mtu_data( StationFile &auxTs  );
-	StationFile				get_parameters( StationFile auxTs );
-	table					read_tbl();
 
 private:
 
@@ -122,15 +117,11 @@ private:
 	size_t			tagsize;// = 32;
 	
 	// functions
-	static INT2		bswap_16(INT2 datum);
 	static INT4		bswap_32(INT4 datum);
 	static int8		bswap_64(int8 datum);
 	static int		byte_to_int( unsigned char first, unsigned char second, unsigned char last );
 	static double	conv_lat(const char* LATG);
 	static double	conv_lon(const char* LNGG);
-	static bool		correct_types(void);
-	static void		cts2array( std::vector<Channel> &, std::string, index_t );
-	static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
 	void			get_data( std::vector<Channel> &auxCh );
 	static int		get_number_of_bytes( std::string infile );
 	static bool		positioning( std::ifstream &tbl, char* label);
@@ -139,6 +130,13 @@ private:
 	static int		read_value( char *pos );
 	void			finish_channel_details( std::vector<Channel> &auxCh  );
 	void			read_cts_file( std::vector<Channel> &auxCh );
+	table					read_tbl();
+	void					read_mtu_data( StationFile &auxTs  );
+	StationFile				get_parameters( StationFile auxTs );
+	//matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
+	//static bool		correct_types(void);
+	//static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
+	//static INT2		bswap_16(INT2 datum);	
 };
 
 #endif // MTU_H

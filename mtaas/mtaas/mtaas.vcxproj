@@ -136,6 +136,7 @@
     <ClInclude Include="Mtu.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ts2fc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryProperties.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="MT.cpp" />
     <ClCompile Include="Mtu.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="ts2fc.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

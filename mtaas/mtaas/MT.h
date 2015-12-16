@@ -68,7 +68,7 @@ typedef enum {
 typedef enum {
 	FIXED_WINDOW_LENGTH = 1,
 	VARIABLE_WINDOW_LENGTH
-} TS_TO_FFT;
+} TS_TO_FFT_TYPE;
 
 // sets which kind of estimator will be used to retrieve the transfer tensors
 typedef enum {
@@ -78,6 +78,12 @@ typedef enum {
 	BOUNDED_INFLUENCE,
 	TWO_STEPS_BOUNDED_INFLUENCE
 } ESTIMATOR_TYPE;
+
+// sets which kind of estimator will be used to retrieve the transfer tensors
+typedef enum {
+	SINGLE_SITE = 1,
+	REMOTE_REFERENCE
+} RR_OR_SS_TYPE;
 
 // responsible for time reference of station
 class Date
@@ -119,7 +125,7 @@ public:
 
 	~Channel() {
 		//delete arCoeff;
-		//delete correction;
+		//delete systemResponse;
 		//delete timeSeries;
 	}
 
@@ -128,8 +134,9 @@ public:
 	
 	matCUDA::Array<double> *timeSeries;
 	matCUDA::Array<double> *arCoeff;
+	matCUDA::Array<ComplexDouble> *systemResponse;
+	matCUDA::Array<double>	*systemResponseFreqs;
 	matCUDA::Array<ComplexDouble> *correction;
-	matCUDA::Array<double>	*correctionFreqs;
 	matCUDA::Array<ComplexDouble> *fc;
 	double countConversion;
 	double orientationHor;
@@ -141,12 +148,30 @@ public:
 	double gain;
 };
 
+// class containing info from each Channel within each TS
+class FrequencyResponses
+{
+public:
+	
+	FrequencyResponses() {};
+	~FrequencyResponses() {};
+
+	FrequencyResponses(const FrequencyResponses& element) {*this = element;};
+    FrequencyResponses& operator = (const FrequencyResponses& element);
+	
+	double frequency;
+	matCUDA::Array<ComplexDouble> *in;
+	matCUDA::Array<ComplexDouble> *inRR;
+	matCUDA::Array<ComplexDouble> *out;
+};
+
 // class containing info from each TS within station
 class StationFile
 {
 public:
 
-	StationFile() {};
+	StationFile():
+		startRowforRR(0) {};
 	~StationFile() {
 		/*delete timeVector; */ };
 
@@ -164,11 +189,16 @@ public:
 	double			exDipoleLength;
 	double			eyDipoleLength;
 	Date			date;
+	size_t			startRowforRR;
 
 	// extractors
 	ExtractorMTU mtu;
 
+	// to store time-series for each channel and its respective fourier coefficients
 	std::vector<Channel> ch;
+
+	// to store FCs corrected for each frequency, in order to calculate Z
+	std::vector<FrequencyResponses> fr;
 
 	// functions
 	bool			is_acquisition_continuos( Array<double> *timeVector );
@@ -200,7 +230,7 @@ public:
 	void			read_time_series( DirectoryProperties *dirInfo );
 
 	// function to extract corrected FC coefficients to evaluate transfer functions
-	void			get_FCs();
+	static void		get_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type );
 };
 
 // utils

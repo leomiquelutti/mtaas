@@ -1,0 +1,42 @@
+info.egb.nDecimationLevel = 4;
+info.egb.factorOfEachDecimationLevel = 4;
+info.egb.windowLength = 4096;
+info.egb.overlap = 0.25;
+info.egb.minNumSegments = 4;
+
+info.egb.maxIter = 50;
+info.egb.maxIterMono = 2;
+info.egb.threshold = 0.02;
+info.egb.thresholdLossFunction = 1.5;
+info.egb.thresholdMon = 2.8;
+info.egb.beta = 0.7784;
+info.egb.pLRatio = 0.05;
+info.egb.nFreq = info.egb.windowLength/4;
+info.egb.npw = round(info.egb.pLRatio*info.egb.windowLength/(1 - info.egb.pLRatio));
+
+
+info.egb.fcDistribution =  [1  800  992
+                            1  544  736
+                            1  384  512
+                            1  256  384
+                            2  800  992
+                            2  544  736
+                            2  384  512
+                            2  256  384
+                            3  800  992
+                            3  544  736
+                            3  384  512
+                            3  256  384
+                            4  800  992
+                            4  544  736
+                            4  384  512
+                            4  256  384
+                            4  192  256
+                            4  128  192
+                            4  96  128
+                            4  64  96
+                            4  32  64
+                            4  24  32
+                            4  16  24
+                            4  8  16
+                            4  4  8];

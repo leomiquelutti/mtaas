@@ -9,7 +9,6 @@
 #include <cstring>
 #include <fstream>
 #include <string>
-//#include <vector>
 #include <sstream>
 #include <boost\iostreams\device\array.hpp>
 #include <boost/exception/all.hpp>
@@ -96,6 +95,9 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 	std::vector<Channel> auxCh(auxTs.nChannels);
 	for( int i = 0; i < auxCh.size(); i++ )
 		auxCh[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
+
+	// fill in correction vectors
+	this->read_cts_file( auxCh );
 	
 	// get mtu raw data
 	*this = auxTs.mtu;
@@ -111,108 +113,7 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 	// finishes filling channel details, as gain, orientation, count conversion, etc
 	this->finish_channel_details( auxCh );
 
-	// fill in correction vectors
-
 	auxTs.ch = auxCh;
-}
-
-void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
-{
-	// hx
-	auxCh[0].channel_type = CHANNEL_TYPE_H;
-	auxCh[0].channel_orientation = CHANNEL_ORIENTATION_X;
-	auxCh[0].name = "hx";
-	
-	// hy
-	auxCh[1].channel_type = CHANNEL_TYPE_H;
-	auxCh[1].channel_orientation = CHANNEL_ORIENTATION_Y;
-	auxCh[1].name = "hy";
-
-	if( auxCh.size() == 5 ) {
-		// hz
-		auxCh[2].channel_type = CHANNEL_TYPE_H;
-		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_Z;
-		auxCh[2].name = "hz";
-
-		// ex
-		auxCh[3].channel_type = CHANNEL_TYPE_E;
-		auxCh[3].channel_orientation = CHANNEL_ORIENTATION_X;
-		auxCh[3].name = "ex";
-
-		// ey
-		auxCh[4].channel_type = CHANNEL_TYPE_E;
-		auxCh[4].channel_orientation = CHANNEL_ORIENTATION_Y;
-		auxCh[4].name = "ey";
-	}
-	else if( auxCh.size() == 4 ) {
-		// ex
-		auxCh[2].channel_type = CHANNEL_TYPE_E;
-		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_X;
-		auxCh[2].name = "ex";
-
-		// ey
-		auxCh[3].channel_type = CHANNEL_TYPE_E;
-		auxCh[3].channel_orientation = CHANNEL_ORIENTATION_Y;
-		auxCh[3].name = "ey";
-	}
-	else if( auxCh.size() == 3 ) {
-		// hz
-		auxCh[2].channel_type = CHANNEL_TYPE_H;
-		auxCh[2].channel_orientation = CHANNEL_ORIENTATION_Z;
-		auxCh[2].name = "hz";
-	}
-	else {
-		std::cout << "number of channels different than 3, 4 or 5. terminating the program" << std::endl;
-		exit(80);
-	}
-
-	// fill in others info
-	for( int i = 0; i < auxCh.size(); i++ ) {
-
-		// magnetic
-		if( auxCh[i].channel_type == CHANNEL_TYPE_H ) {
-
-			// x
-			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
-				auxCh[i].orientationHor = this->tbl.hazm; // azimuth related to true north
-				auxCh[i].orientationVer = 0; // assumed to be on the plane
-			}
-
-			// y
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
-				auxCh[i].orientationHor = this->tbl.hazm + 90; // azimuth related to true north
-				auxCh[i].orientationVer = 0; // assumed to be on the plane
-			}
-
-			// z
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Z ) {
-				auxCh[i].orientationHor = 0; // azimuth related to true north
-				auxCh[i].orientationVer = 90; // assumed to be directed to earth's center
-			}
-
-			auxCh[i].gain = this->tbl.hgn;
-			auxCh[i].countConversion = this->HCV/this->FS;
-		}
-
-		// electric
-		else if( auxCh[i].channel_type == CHANNEL_TYPE_E ) {
-
-			// x
-			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
-				auxCh[i].dipoleLength = this->tbl.exln/1000; // dipole length in km
-				auxCh[i].orientationHor = this->tbl.eazm; // azimuth related to true north
-			}
-
-			// y
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
-				auxCh[i].dipoleLength = this->tbl.eyln/1000; // dipole length in km
-				auxCh[i].orientationHor = this->tbl.eazm + 90; // azimuth related to true north
-			}
-			
-			auxCh[i].gain = this->tbl.egn;
-			auxCh[i].countConversion = this->ECV/this->FS/auxCh[i].dipoleLength;
-		}
-	}
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -262,43 +163,6 @@ void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t posit
 		ts->mtu.recordLength = (int)(ts->mtu.nScansPerRecord * ts->nChannels * ts->mtu.sampleLength + ts->mtu.tagLength);
 	}
     delete[] CurrentTag;
-}
-
-void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
-{
-	//MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
-	//MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
-
-	//bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
-	//unsigned int val = 0;
-
-	//if( checkTime == false )
-	//{
-	//	boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
-	//	val = MtuBase.ts->samplingFrequency*diffInTime.total_seconds();
-	//}
-
-	//for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
-	//	(*timeVector)( i + idxOfTimeVector) = i + val;
-}
-
-Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )
-{
-	//StationBase newMtu = *station;
-	//size_t startAt = 0;
-	//size_t idxOfTimeVector = 0;
-
-	//ifstream infile( input.c_str(), ios::binary );
-	//Array<double> result( newMtu.mtu->numberOfSamples );
-	//for( int i = 0; i < newMtu.mtu->numberOfRecords; i++ ) {
-	//	read_TSn_tag( infile, &newMtu, startAt );
-	//	startAt += newMtu.mtu->recordLength;
-	//	fill_time_vector( &result, *station, newMtu, i*newMtu.mtu->nScansPerRecord );
-	//}
-	//infile.close();
-	//return result;
-
-	return Array<double>(1);
 }
 
 int ExtractorMTU::get_number_of_bytes( string infile )
@@ -808,32 +672,6 @@ table ExtractorMTU::read_tbl() {
     return tbl;
 }
 
-bool ExtractorMTU::correct_types(void) {
-    if(sizeof(INT2)==2 && sizeof(INT4)==4 && sizeof(int8)==8 && sizeof(float8)==8)
-        return true;
-    else {
-        cout<<"some type haven't the correct size:"<<endl;
-        cout<<"size of int2       "<<setw(4)<<sizeof(INT2)<<endl;
-        cout<<"size of int4       "<<setw(4)<<sizeof(INT4)<<endl;
-        cout<<"size of float8     "<<setw(4)<<sizeof(float8)<<endl<<endl;
-
-        cout<<"you will need to edit the bytes.h file."<<endl;
-        cout<<"the sizes of types in your machine are:"<<endl;
-        cout<<"size of short      "<<setw(4)<<sizeof(short)<<endl;
-        cout<<"size of int        "<<setw(4)<<sizeof(int)<<endl;
-        cout<<"size of long       "<<setw(4)<<sizeof(long)<<endl;
-        cout<<"size of long long  "<<setw(4)<<sizeof(long long)<<endl;
-        cout<<"size of float      "<<setw(4)<<sizeof(float)<<endl;
-        cout<<"size of double     "<<setw(4)<<sizeof(double)<<endl;
-        cout<<"size of long double"<<setw(4)<<sizeof(long double)<<endl;
-        return false;
-    }
-}
-
-INT2 ExtractorMTU::bswap_16(INT2 datum) {
-    return (((datum & 0xff00) >>  8) | ((datum & 0x00ff) <<  8));
-}
-
 INT4 ExtractorMTU::bswap_32(INT4 datum) {
     return (((datum & 0xff000000) >> 24) | ((datum & 0x00ff0000) >>  8) | \
             ((datum & 0x0000ff00) <<  8) | ((datum & 0x000000ff) << 24));
@@ -909,7 +747,7 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 	ifstream in(ctsFileName);
 	if(!in) {
         cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
-        exit(10);
+        std::exit(10);
     }
 	    
 	string line;
@@ -919,69 +757,237 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 		getline(in,line);
 	
 	size_t numberOfPoints = 0;
+	double auxFreqUpdate = 0;
 	while(in.eof() == false) {
+		std::stringstream istr;
+		double freq;
+		size_t auxTSBand;
 		getline(in,line);
-		numberOfPoints++;
+
+		istr.str(line.c_str());
+		istr >> freq;
+		if (istr.peek() == ',')
+				istr.ignore();
+
+		istr >> auxTSBand;
+		if (istr.peek() == ',')
+				istr.ignore();
+
+		if( this->mtuTsBand == phoenixTsBand_t(auxTSBand) && auxFreqUpdate != freq ) {
+			numberOfPoints++;
+			auxFreqUpdate = freq;
+		}
 	}
 	in.close();
 
-	// allocate memory for each channel's correction vector
+	// allocate memory for each channel's systemResponse vector
 	for( int i = 0; i < auxCh.size(); i++ ) {
-		auxCh[i].correction = new Array<ComplexDouble>( numberOfPoints-1 );
-		auxCh[i].correctionFreqs = new Array<double>( numberOfPoints-1 );
+		auxCh[i].systemResponse = new Array<ComplexDouble>( numberOfPoints );
+		auxCh[i].systemResponseFreqs = new Array<double>( numberOfPoints );
 	}
 
 	in.open(ctsFileName);
 	if(!in) {
         cerr<<"Could not open CTS file \""<<ctsFileName<<'\"'<<endl;
-        exit(10);
+        std::exit(10);
     }
+	else {
 
-	// detect beginning of data in cts file
-    while(line.find( '/' ) == string::npos)
-		getline(in,line);
+		// detect beginning of data in cts file
+		while(line.find( '/' ) == string::npos)
+			getline(in,line);
 
-	// fills in result with correction values
-	for( int i = 0; i < numberOfPoints-1; i++ ) {
-		getline(in,line);
-		cts2array( auxCh, line, i );		
+			size_t idx = -1;
+			while(in.eof() == false) {
+				getline(in,line);
+
+			double freq, real, imag, auxFreqUpdate = 0;
+			size_t auxTSBand, auxI = 0;
+			std::stringstream istr;
+
+			istr.str(line.c_str());
+			istr >> freq;
+			if (istr.peek() == ',')
+					istr.ignore();
+
+			istr >> auxTSBand;
+			if (istr.peek() == ',')
+					istr.ignore();
+
+			if( this->mtuTsBand == phoenixTsBand_t(auxTSBand) && auxFreqUpdate != freq ) {
+				
+				idx++;
+				auxFreqUpdate = freq;
+				if( idx >= auxCh[auxI].systemResponseFreqs[0].getDim(0) )
+					break;
+				for( int i = 0; i < auxCh.size(); i++ ) {
+					if (istr.peek() == ',')
+						istr.ignore();
+					istr >> real;
+					if (istr.peek() == ',')
+						istr.ignore();
+					istr >> imag;
+					auxI = 3*(i==0) + 4*(i==1) + 1*(i==3) + 2*(i==4);
+					auxCh[auxI].systemResponse[0]( idx ) = Complex( real, imag );
+					auxCh[auxI].systemResponseFreqs[0]( idx ) = freq;
+				}
+			}
+		}
+		in.close();
 	}
 }
 
-void ExtractorMTU::cts2array( std::vector<Channel> &auxCh, string line, index_t idx )
+void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
 {
-	std::stringstream istr(line.c_str());
-    double freq, real, imag;
+	auxCh[0].name = "hx";
+	auxCh[1].name = "hy";
+	if( auxCh.size() == 5 ) {
+		auxCh[2].name = "hz";
+		auxCh[3].name = "ex";
+		auxCh[4].name = "ey";
+	}
+	else if( auxCh.size() == 4 ) {
+		auxCh[2].name = "ex";
+		auxCh[3].name = "ey";
+	}
+	else if( auxCh.size() == 3 ) {
+		auxCh[2].name = "hz";
+	}
+	else {
+		std::cout << "number of channels different than 3, 4 or 5. terminating the program" << std::endl;
+		exit(80);
+	}
 
-    istr >> (*data)( idx, 0 );
-	if (istr.peek() == ',')
-			istr.ignore();
-
-    istr >> (*data)( idx, 1 );
-	if (istr.peek() == ',')
-			istr.ignore();
-
+	// fill in others info
 	for( int i = 0; i < auxCh.size(); i++ ) {
-		if (istr.peek() == ',')
-			istr.ignore();
-		istr >> real;
-		if (istr.peek() == ',')
-			istr.ignore();
-		istr >> imag;
-		auxCh[i].correction[0]( idx ) = Complex( real, imag );
+
+		// define channel type
+		if( auxCh[i].name.substr( 0, 0 ).compare( "h" ) || auxCh[i].name.substr( 0, 0 ).compare( "H" ) )
+			auxCh[i].channel_type = CHANNEL_TYPE_H;
+		else if( auxCh[i].name.substr( 0, 0 ).compare( "e" ) || auxCh[i].name.substr( 0, 0 ).compare( "E" ) )
+			auxCh[i].channel_type = CHANNEL_TYPE_E;	
+		else {
+			std::cout << "first letter of channel name differenting than E(e) or H(h). terminating the program" << std::endl;
+			exit(80);
+		}
+
+		// define channel orientation
+		if( auxCh[i].name.substr( 1, 1 ).compare( "x" ) || auxCh[i].name.substr( 1, 1 ).compare( "X" ) )
+			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_X;
+		else if( auxCh[i].name.substr( 1, 1 ).compare( "y" ) || auxCh[i].name.substr( 1, 1 ).compare( "Y" ) )
+			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_Y;
+		else if( auxCh[i].name.substr( 1, 1 ).compare( "z" ) || auxCh[i].name.substr( 1, 1 ).compare( "Z" ) )
+			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_Z;		
+		else {
+			std::cout << "seccond letter of channel name differenting than X(x), Y(y) or Z(z). terminating the program" << std::endl;
+			exit(80);
+		}
+
+		// magnetic
+		if( auxCh[i].channel_type == CHANNEL_TYPE_H ) {
+
+			// x
+			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				auxCh[i].orientationHor = this->tbl.hazm; // azimuth related to true north
+				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			}
+
+			// y
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				auxCh[i].orientationHor = this->tbl.hazm + 90; // azimuth related to true north
+				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			}
+
+			// z
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Z ) {
+				auxCh[i].orientationHor = 0; // azimuth related to true north
+				auxCh[i].orientationVer = 90; // assumed to be directed to earth's center
+			}
+
+			auxCh[i].gain = this->tbl.hgn;
+			auxCh[i].countConversion = this->HCV/this->FS;
+		}
+
+		// electric
+		else if( auxCh[i].channel_type == CHANNEL_TYPE_E ) {
+
+			// x
+			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				auxCh[i].dipoleLength = this->tbl.exln/1000; // dipole length in km
+				auxCh[i].orientationHor = this->tbl.eazm; // azimuth related to true north
+			}
+
+			// y
+			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				auxCh[i].dipoleLength = this->tbl.eyln/1000; // dipole length in km
+				auxCh[i].orientationHor = this->tbl.eazm + 90; // azimuth related to true north
+			}
+			
+			auxCh[i].gain = this->tbl.egn;
+			auxCh[i].countConversion = this->ECV/this->FS/auxCh[i].dipoleLength;
+		}
 	}
 }
 
-phoenixTsBand_t ExtractorMTU::get_phoenix_TS_band( string fileName )
-{
-	if( fileName.find("TS2") != std::string::npos )
-		return TS2;
-	else if( fileName.find("TS3") != std::string::npos )
-		return TS3;
-	else if( fileName.find("TS4") != std::string::npos )
-		return TS4;
-	else if( fileName.find("TS5") != std::string::npos )
-		return TS5;
-	else
-		return noTS;
-}
+//void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
+//{
+//	MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
+//	MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
+//
+//	bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
+//	unsigned int val = 0;
+//
+//	if( checkTime == false )
+//	{
+//		boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
+//		val = MtuBase.ts->samplingFrequency*diffInTime.total_seconds();
+//	}
+//
+//	for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
+//		(*timeVector)( i + idxOfTimeVector) = i + val;
+//}
+//
+//Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )
+//{
+//	StationBase newMtu = *station;
+//	size_t startAt = 0;
+//	size_t idxOfTimeVector = 0;
+//
+//	ifstream infile( input.c_str(), ios::binary );
+//	Array<double> result( newMtu.mtu->numberOfSamples );
+//	for( int i = 0; i < newMtu.mtu->numberOfRecords; i++ ) {
+//		read_TSn_tag( infile, &newMtu, startAt );
+//		startAt += newMtu.mtu->recordLength;
+//		fill_time_vector( &result, *station, newMtu, i*newMtu.mtu->nScansPerRecord );
+//	}
+//	infile.close();
+//	return result;
+//
+//	return Array<double>(1);
+//}
+//
+//bool ExtractorMTU::correct_types(void) {
+//    if(sizeof(INT2)==2 && sizeof(INT4)==4 && sizeof(int8)==8 && sizeof(float8)==8)
+//        return true;
+//    else {
+//        cout<<"some type haven't the correct size:"<<endl;
+//        cout<<"size of int2       "<<setw(4)<<sizeof(INT2)<<endl;
+//        cout<<"size of int4       "<<setw(4)<<sizeof(INT4)<<endl;
+//        cout<<"size of float8     "<<setw(4)<<sizeof(float8)<<endl<<endl;
+//
+//        cout<<"you will need to edit the bytes.h file."<<endl;
+//        cout<<"the sizes of types in your machine are:"<<endl;
+//        cout<<"size of short      "<<setw(4)<<sizeof(short)<<endl;
+//        cout<<"size of int        "<<setw(4)<<sizeof(int)<<endl;
+//        cout<<"size of long       "<<setw(4)<<sizeof(long)<<endl;
+//        cout<<"size of long long  "<<setw(4)<<sizeof(long long)<<endl;
+//        cout<<"size of float      "<<setw(4)<<sizeof(float)<<endl;
+//        cout<<"size of double     "<<setw(4)<<sizeof(double)<<endl;
+//        cout<<"size of long double"<<setw(4)<<sizeof(long double)<<endl;
+//        return false;
+//    }
+//}
+//
+//INT2 ExtractorMTU::bswap_16(INT2 datum) {
+//    return (((datum & 0xff00) >>  8) | ((datum & 0x00ff) <<  8));
+//}

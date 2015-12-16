@@ -36,6 +36,9 @@
     <ClInclude Include="DirectoryProperties.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ts2fc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryProperties.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ts2fc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,5 +1,9 @@
 #include "MT.h"
 #include "Mtu.h"
+#include "ts2fc.h"
+
+class Extract_FCs_FixedWindowLength;
+class Extract_FCs_VariableWindowLength;
 //#include <sstream>
 
 StationBase& StationBase::operator = (const StationBase& element)
@@ -33,12 +37,22 @@ Channel& Channel::operator = (const Channel& element)
 {
 	this->arCoeff = element.arCoeff;
 	this->timeSeries = element.timeSeries;
-	this->correction = element.correction;
+	this->systemResponse = element.systemResponse;
+	this->systemResponseFreqs = element.systemResponseFreqs;
 	this->countConversion = element.countConversion;
 	this->orientationHor = element.orientationHor;
 	this->orientationVer = element.orientationVer;
 	this->name = element.name;
 	this->gain = element.gain;
+
+	return *this;
+}
+
+FrequencyResponses& FrequencyResponses::operator = (const FrequencyResponses& element)
+{
+	this->frequency = element.frequency;
+	this->in = element.in;
+	this->out = element.out;
 
 	return *this;
 }
@@ -64,8 +78,21 @@ void StationBase::read_time_series( DirectoryProperties *dirInfo )
 	}
 }
 
-void StationBase::get_FCs()
+void StationBase::get_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type )
 {
+	switch(rrorss_type) 
+	{
+	case REMOTE_REFERENCE:
+		SetUpRemoteReferenceConcomitance::find_concomitance_for_stations( station );
+	}
+
+	switch(ts2fft_type) 
+	{
+	case FIXED_WINDOW_LENGTH:
+		Extract_FCs_FixedWindowLength::get_FCs( station );
+	case VARIABLE_WINDOW_LENGTH:
+		Extract_FCs_VariableWindowLength::get_FCs( station );
+	}
 }
 
 void Utils::delete_all( std::vector<StationBase> *station )
