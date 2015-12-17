@@ -114,6 +114,25 @@ private:
 };
 
 // class containing info from each Channel within each TS
+class FrequencyResponses
+{
+public:
+	
+	FrequencyResponses() :
+		numberOfStationsInvolved(1) {};
+	~FrequencyResponses() {};
+
+	FrequencyResponses(const FrequencyResponses& element) {*this = element;};
+    FrequencyResponses& operator = (const FrequencyResponses& element);
+	
+	double frequency;
+	size_t numberOfStationsInvolved;
+	matCUDA::Array<ComplexDouble> *in;
+	matCUDA::Array<ComplexDouble> *inRR;
+	matCUDA::Array<ComplexDouble> *out;
+};
+
+// class containing info from each Channel within each TS
 class Channel
 {
 public:
@@ -148,30 +167,17 @@ public:
 	double gain;
 };
 
-// class containing info from each Channel within each TS
-class FrequencyResponses
-{
-public:
-	
-	FrequencyResponses() {};
-	~FrequencyResponses() {};
-
-	FrequencyResponses(const FrequencyResponses& element) {*this = element;};
-    FrequencyResponses& operator = (const FrequencyResponses& element);
-	
-	double frequency;
-	matCUDA::Array<ComplexDouble> *in;
-	matCUDA::Array<ComplexDouble> *inRR;
-	matCUDA::Array<ComplexDouble> *out;
-};
-
 // class containing info from each TS within station
 class StationFile
 {
 public:
 
 	StationFile():
-		startRowforRR(0) {};
+		startRowforRR(0),
+		isThereRR(false),
+		amountOfPossibleCombinationsForRR(1),
+		isAcquisitionContinuous(true) {};
+
 	~StationFile() {
 		/*delete timeVector; */ };
 
@@ -189,7 +195,11 @@ public:
 	double			exDipoleLength;
 	double			eyDipoleLength;
 	Date			date;
+
 	size_t			startRowforRR;
+	bool			isThereRR;
+	size_t			amountOfPossibleCombinationsForRR;
+	bool			isAcquisitionContinuous;
 
 	// extractors
 	ExtractorMTU mtu;
@@ -198,7 +208,8 @@ public:
 	std::vector<Channel> ch;
 
 	// to store FCs corrected for each frequency, in order to calculate Z
-	std::vector<FrequencyResponses> fr;
+	// stores the possible different combinations allowed
+	std::vector<std::vector<FrequencyResponses>> fr;
 
 	// functions
 	bool			is_acquisition_continuos( Array<double> *timeVector );
@@ -230,7 +241,7 @@ public:
 	void			read_time_series( DirectoryProperties *dirInfo );
 
 	// function to extract corrected FC coefficients to evaluate transfer functions
-	static void		get_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type );
+	static void		get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type );
 };
 
 // utils

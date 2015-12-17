@@ -29,6 +29,10 @@ StationFile& StationFile::operator = (const StationFile& element)
 	this->samplingFrequency = element.samplingFrequency;
 	this->timeVector = element.timeVector;
 	this->ch = element.ch;
+	this->isThereRR = element.isThereRR;
+	this->startRowforRR = element.startRowforRR;
+	this->amountOfPossibleCombinationsForRR = element.amountOfPossibleCombinationsForRR;
+	this->isAcquisitionContinuous = element.isAcquisitionContinuous;
 
 	return *this;
 }
@@ -78,20 +82,21 @@ void StationBase::read_time_series( DirectoryProperties *dirInfo )
 	}
 }
 
-void StationBase::get_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type )
+void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE ts2fft_type, RR_OR_SS_TYPE rrorss_type )
 {
 	switch(rrorss_type) 
 	{
 	case REMOTE_REFERENCE:
+		// responsible for define all possible combinations and setup where to read from
 		SetUpRemoteReferenceConcomitance::find_concomitance_for_stations( station );
 	}
 
 	switch(ts2fft_type) 
 	{
 	case FIXED_WINDOW_LENGTH:
-		Extract_FCs_FixedWindowLength::get_FCs( station );
+		Extract_FCs_FixedWindowLength::get_all_FCs( station );
 	case VARIABLE_WINDOW_LENGTH:
-		Extract_FCs_VariableWindowLength::get_FCs( station );
+		Extract_FCs_VariableWindowLength::get_all_FCs( station );
 	}
 }
 

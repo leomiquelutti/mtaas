@@ -171,21 +171,6 @@ size_t DirectoryProperties::get_number_of_tsn_files( StationBase *station )
 				for (vec::const_iterator it (v.begin()); it != v.end(); ++it)
 					if( it->filename().string().find( ".TS" ) != std::string::npos )
 						fileCounter++;
-
-				//// get TSn and its respective TBL and CTS files
-				//for( int i = 0; i < nTbl; i++ ) {
-				//	for (vec::const_iterator it (v.begin()); it != v.end(); ++it) {
-				//		if( it->filename().string().find( auxTblNames[i].substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".TS" ) != std::string::npos ) {
-				//			auxTs.mtu->tblFile = auxTblNames[i];
-				//			auxTs.mtu->tsnFile = it->filename().string();
-				//			auxTs.mtu->mtuTsBand = phoenixTsBand_t( atoi( &(auxTs.mtu->tsnFile.back()) ) );
-				//			auxTs.mtu->ctsFile = it->filename().string().substr( 0, auxTblNames[i].find( ".TBL" ) ) + ".CTS";
-				//			//station->ts[tsCounter++].mtu = new ExtractorMTU;
-				//			station->ts.push_back(auxTs);
-				//			tsCounter++;
-				//		}
-				//	}
-				//}
 			}
 			else
 			{
