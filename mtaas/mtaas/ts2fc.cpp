@@ -29,10 +29,85 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 	bool auxAcqstnCntns = true;
 	for( int istn = 0; istn < station.size(); istn++ ) {
 		for( int its = 0; its < station[istn].ts.size(); its++ ) {
+
+			auxN = station[istn].ts[its].ch[0].timeSeries[0].getDim(0);
+			auxAcqstnCntns = station[istn].ts[its].isAcquisitionContinuous;
+			Extract_FCs_FixedWindowLength fc( auxAcqstnCntns, auxN );
+
+			fc.set_corrections( station[istn].ts[its] );
+
 			for( int imatch = 0; imatch < station[istn].ts[its].amountOfPossibleCombinationsForRR; imatch++ ) {
-				auxN = station[istn].ts[its].ch[0].timeSeries[0].getDim(0);
-				auxAcqstnCntns = station[istn].ts[its].isAcquisitionContinuous;
-				Extract_FCs_FixedWindowLength fc( auxAcqstnCntns, auxN );
+			}
+		}
+	}
+}
+
+void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
+{
+	// auxiliary variables
+	size_t npts2;
+	double pi2n, t, g, freq, period, w, RE, IM;
+	ComplexDouble temp;
+	bool auxID;
+
+	npts2 = floor(this->windowLength/2);
+	pi2n = 2*PI/(this->windowLength/2);
+
+	// fill in dr with sampling periods for all decimation levels
+	std::vector<double> dr( this->nDecimationLevel );
+	for( int i = 0;  i < dr.size(); i++ )
+		dr[i] = pow( this->factorOfEachDecimationLevel, i )/ts.samplingFrequency;
+
+	// correct for first difference if appropriate
+    // correct unist of fc's
+	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+		for( int id = 0; id < this->nDecimationLevel; id++ ) {
+			t = sqrt(dr[id]);
+			for( int i = 0; i < npts2; i++ )
+				ts.ch[ich].correction[0]( id, i ) = ts.ch[ich].countConversion*t;
+		}
+	}
+	
+	// corrections for low pass decimation filters 
+	// corrects for effect of low pass filters on all decimation levels
+	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+		for( int id = 1; id < this->nDecimationLevel; id++ ) {
+			for( int jd = id; jd < this->nDecimationLevel; jd++ ) {
+				pi2n = 2*PI*dr[id - 1]/dr[jd]/this->windowLength;
+				for( int i = 0; i < npts2; i++ ) {
+					g = this->fcDistribution[0]( id, 1 );
+					for( int j = 1; j < this->fcDistribution[0].getDim(1); j++ ) {
+						t = pi2n*i*( j - 1 );
+						g += 2*this->fcDistribution[0]( id, j )*cos( t );
+					}
+					ts.ch[ich].correction[0]( id, i ) = ts.ch[ich].correction[0]( id, i )/g;
+				}
+			}
+		}
+	}
+
+	// corrections for analogue instrument filters/system response
+	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+		for( int id = 0; id < this->nDecimationLevel; id++ ) {
+			for( int i = 0; i < npts2; i++ ) {
+				freq = (i + 1)/dr[id]/this->windowLength;
+				period = 1/freq;
+				temp = ComplexDouble( 0, 0 );
+				for( int j = 0; j < ts.ch[ich].correction[0].getDim(0) - 1; j++ ) {
+					if( freq > ts.ch[ich].systemResponse[0]( j, 0 ).real() && freq <= ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() ) {
+						w = (ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - freq)/(ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - ts.ch[ich].systemResponse[0]( j, 0 ).real());
+						RE = ts.ch[ich].systemResponse[0]( j, 1 ).real()*w + ts.ch[ich].systemResponse[0]( j + 1, 1 ).real()*( 1 - w );
+						IM = ts.ch[ich].systemResponse[0]( j, 1 ).imag()*w + ts.ch[ich].systemResponse[0]( j + 1, 1 ).imag()*( 1 - w );
+						auxID = true;
+						break;
+					}
+				}
+				if(auxID) {
+					temp = ComplexDouble( RE, IM )*ts.ch[ich].gain;
+					ts.ch[ich].correction[0]( id, i ) = ts.ch[ich].correction[0]( id, i )/temp;
+				}
+				else
+					ts.ch[ich].correction[0]( id, i ) = 0;
 			}
 		}
 	}

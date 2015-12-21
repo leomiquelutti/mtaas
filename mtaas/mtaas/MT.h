@@ -136,6 +136,7 @@ public:
 class Channel
 {
 public:
+
 	
 	Channel() : 
 		countConversion(1),

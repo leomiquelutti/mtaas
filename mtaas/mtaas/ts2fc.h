@@ -28,6 +28,7 @@ public:
 	matCUDA::Array<int> *fcDistribution;
 
 	static void get_all_FCs( std::vector<StationBase> &station );
+	void set_corrections( StationFile &ts );
 
 private:
 
@@ -50,6 +51,7 @@ private:
 	matCUDA::Array<int> get_draft_of_fc_distribution();
 	void set_parameters();
 	matCUDA::Array<int> get_fc_distribution( matCUDA::Array<int> auxFcDistribution );
+	//void set_corrections( std::vector<Channel> &ch, double samplingFrequency );
 };
 
 class Extract_FCs_VariableWindowLength {
