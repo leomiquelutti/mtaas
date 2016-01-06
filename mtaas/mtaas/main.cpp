@@ -35,10 +35,15 @@ int main()
 	for( int i = 0; i < station.size(); i++ )
 		station[i].read_time_series( &dirInfo );
 
+	// build the draft for the time vector, considering all continuous acquisition
+	// TODO - do it correctly
+	Utils::draft_build_time_vector( station );
+
 	//// checkouts
 	//for( int istn = 0; istn < station.size(); istn++ ) {
 	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {		
-	//		std::cout << station[istn].ts[its].amountOfPossibleCombinationsForRR << " ";
+	//		station[istn].ts[its].timeVector[0].print();
+	//		//std::cout << " " << " ";
 	//		//for( int irow = 0; irow < station[istn].ts[its].ch[0].systemResponseFreqs[0].getDim(0); irow++ ) {
 	//		//	std::cout << station[istn].ts[its].ch[0].systemResponseFreqs[0](irow) << " ";
 	//		//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )				
@@ -50,9 +55,18 @@ int main()
 	//}
 
 	// extract corrected (to physical units) Fourier coefficients 
-	//for( int i = 0; i < station.size(); i++ )
-	//	station[i].get_all_FCs( ts2fft );
 	StationBase::get_all_FCs( station, ts2fft_type, rrorss_type );
+
+	//// checkouts
+	//for( int istn = 0; istn < station.size(); istn++ ) {
+	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {		
+	//		cout << station[istn].ts[its].combination[0].idxStn[0] << endl;	
+	//		cout << station[istn].ts[its].combination[0].idxTs[0] << endl;		
+	//		station[istn].ts[its].combination[0].idxBgn[0].print();
+	//		station[istn].ts[its].combination[0].idxEnd[0].print();
+	//	}
+	//	std::cout << std::endl;
+	//}
 
 	// delete everything allocated
 	// TODO

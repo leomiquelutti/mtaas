@@ -30,8 +30,7 @@ StationFile& StationFile::operator = (const StationFile& element)
 	this->timeVector = element.timeVector;
 	this->ch = element.ch;
 	this->isThereRR = element.isThereRR;
-	this->startRowforRR = element.startRowforRR;
-	this->amountOfPossibleCombinationsForRR = element.amountOfPossibleCombinationsForRR;
+	this->numberOfCombinations = element.numberOfCombinations;
 	this->isAcquisitionContinuous = element.isAcquisitionContinuous;
 
 	return *this;
@@ -57,6 +56,14 @@ FrequencyResponses& FrequencyResponses::operator = (const FrequencyResponses& el
 	this->frequency = element.frequency;
 	this->in = element.in;
 	this->out = element.out;
+
+	return *this;
+}
+
+Combination& Combination::operator = (const Combination& element)
+{
+	this->idxStn = element.idxStn;
+	this->idxTs = element.idxTs;
 
 	return *this;
 }
@@ -88,7 +95,9 @@ void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE
 	{
 	case REMOTE_REFERENCE:
 		// responsible for define all possible combinations and setup where to read from
-		SetUpRemoteReferenceConcomitance::find_concomitance_for_stations( station );
+		Combination::define_combinations_for_rr( station );
+	case SINGLE_SITE:
+		Combination::define_combinations_for_ss( station );
 	}
 
 	switch(ts2fft_type) 
@@ -100,9 +109,53 @@ void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE
 	}
 }
 
+void Combination::define_combinations_for_rr( std::vector<StationBase> &station )
+{
+}
+
+void Combination::define_combinations_for_ss( std::vector<StationBase> &station )
+{
+	Combination auxRRConc;
+	auxRRConc.idxStn.resize(1);
+	auxRRConc.idxTs.resize(1);
+
+	// this is just the combination for single site
+	for( int istn = 0; istn < station.size(); istn++ ) {
+		for( int its = 0; its < station[istn].ts.size(); its++ ) {
+
+			station[istn].ts[its].combination.resize(1);
+			station[istn].ts[its].combination[0].idxStn.resize(1);
+			station[istn].ts[its].combination[0].idxTs.resize(1);
+
+			station[istn].ts[its].combination[0].numberOfConcomitantTs = 1;
+			station[istn].ts[its].combination[0].idxStn[0] = istn;
+			station[istn].ts[its].combination[0].idxTs[0] = its;
+
+			station[istn].ts[its].combination[0].idxBgn = new Array<int>( 1, auxRRConc.numberOfConcomitantTs + 1 );
+			station[istn].ts[its].combination[0].idxBgn[0](0,0) = station[istn].ts[its].timeVector[0](0,0);
+			station[istn].ts[its].combination[0].idxBgn[0](0,1) = station[istn].ts[its].timeVector[0](0,0);
+
+			station[istn].ts[its].combination[0].idxEnd = new Array<int>( 1, auxRRConc.numberOfConcomitantTs + 1 );
+			station[istn].ts[its].combination[0].idxEnd[0](0,0) = station[istn].ts[its].timeVector[0](0,1);
+			station[istn].ts[its].combination[0].idxEnd[0](0,1) = station[istn].ts[its].timeVector[0](0,1);
+		}
+	}
+}
+
 void Utils::delete_all( std::vector<StationBase> *station )
 {
 	for( int i = 0; i < station->size(); i++ ) {
 
+	}
+}
+
+void Utils::draft_build_time_vector( std::vector<StationBase> &station )
+{
+	for( int istn = 0; istn < station.size(); istn++ ) {
+		for( int its = 0; its < station[istn].ts.size(); its++ ) {
+			station[istn].ts[its].timeVector = new Array<int>(1,2);
+			station[istn].ts[its].timeVector[0](0,0) = 0;
+			station[istn].ts[its].timeVector[0](0,1) = station[istn].ts[its].ch[0].timeSeries->getDim(0) - 1;
+		}
 	}
 }

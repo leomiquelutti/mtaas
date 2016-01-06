@@ -64,8 +64,6 @@ StationFile ExtractorMTU::get_parameters( StationFile auxTs )
 	auxTs.exDipoleLength = auxTs.mtu.tbl.exln;
 	auxTs.eyDipoleLength = auxTs.mtu.tbl.eyln;
 
-
-
 	// read TSn first tag - filling of auxTs inside function
 	ifstream infile( this->tsnFile, ios::binary );
 	if ( infile.good() ) {
@@ -204,8 +202,6 @@ void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Chan
 
 	// TODO - IMPROVE!
 
-	// for nChannels = 5
-			//cout << this->nScansPerRecord << endl;
 	if( auxCh.size() == 5 ) {
 		for (int i = 0; i < this->nScansPerRecord; i++ ) {
 			line = i + counter*this->nScansPerRecord;

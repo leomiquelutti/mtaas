@@ -113,6 +113,28 @@ private:
 	double declinationInput;
 };
 
+class Combination
+{
+public:
+
+	Combination() :
+		numberOfConcomitantTs(1) {};
+	~Combination() {};	
+
+	Combination(const Combination& element) {*this = element;};
+    Combination& operator = (const Combination& element);
+
+	// index to reference for which Station and which Ts there is concomitance
+	size_t numberOfConcomitantTs;
+	std::vector<size_t> idxStn;
+	std::vector<size_t> idxTs;
+	matCUDA::Array<int> *idxBgn;
+	matCUDA::Array<int> *idxEnd;
+
+	static void define_combinations_for_rr( std::vector<StationBase> &station );
+	static void define_combinations_for_ss( std::vector<StationBase> &station );
+};
+
 // class containing info from each Channel within each TS
 class FrequencyResponses
 {
@@ -157,7 +179,7 @@ public:
 	matCUDA::Array<ComplexDouble> *systemResponse;
 	matCUDA::Array<double>	*systemResponseFreqs;
 	matCUDA::Array<ComplexDouble> *correction;
-	matCUDA::Array<ComplexDouble> *fc;
+	//matCUDA::Array<ComplexDouble> *fc;
 	double countConversion;
 	double orientationHor;
 	double orientationVer;
@@ -174,9 +196,8 @@ class StationFile
 public:
 
 	StationFile():
-		startRowforRR(0),
 		isThereRR(false),
-		amountOfPossibleCombinationsForRR(1),
+		numberOfCombinations(1),
 		isAcquisitionContinuous(true) {};
 
 	~StationFile() {
@@ -185,7 +206,7 @@ public:
 	StationFile(const StationFile& element) {*this = element;};
     StationFile& operator = (const StationFile& element);
 
-	matCUDA::Array<double>	*timeVector;
+	matCUDA::Array<int>	*timeVector;
 
 	// parameters for processing
 	double			samplingFrequency;
@@ -197,9 +218,8 @@ public:
 	double			eyDipoleLength;
 	Date			date;
 
-	size_t			startRowforRR;
 	bool			isThereRR;
-	size_t			amountOfPossibleCombinationsForRR;
+	size_t			numberOfCombinations;
 	bool			isAcquisitionContinuous;
 
 	// extractors
@@ -210,6 +230,7 @@ public:
 
 	// to store FCs corrected for each frequency, in order to calculate Z
 	// stores the possible different combinations allowed
+	std::vector<Combination> combination;
 	std::vector<std::vector<FrequencyResponses>> fr;
 
 	// functions
@@ -251,6 +272,7 @@ class Utils
 public:
 
 	static void delete_all( std::vector<StationBase> *station );
+	static void draft_build_time_vector( std::vector<StationBase> &station );
 };
 
 #endif

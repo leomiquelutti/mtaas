@@ -19,10 +19,6 @@ Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( bool acquisitionCo
 	this->set_parameters();
 }
 
-void SetUpRemoteReferenceConcomitance::find_concomitance_for_stations( std::vector<StationBase> &station )
-{
-}
-
 void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &station )
 {
 	size_t auxN = 0;
@@ -36,7 +32,12 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 
 			fc.set_corrections( station[istn].ts[its] );
 
-			for( int imatch = 0; imatch < station[istn].ts[its].amountOfPossibleCombinationsForRR; imatch++ ) {
+			// checkouts
+			if( station[istn].ts[its].mtu.mtuTsBand == phoenixTsBand_t(5) )
+				for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
+					station[istn].ts[its].ch[ich].correction->print();
+
+			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
 			}
 		}
 	}
@@ -61,6 +62,7 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 	// correct for first difference if appropriate
     // correct unist of fc's
 	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+		ts.ch[ich].correction = new Array<ComplexDouble>( this->nDecimationLevel, npts2 );
 		for( int id = 0; id < this->nDecimationLevel; id++ ) {
 			t = sqrt(dr[id]);
 			for( int i = 0; i < npts2; i++ )
@@ -89,11 +91,12 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 	// corrections for analogue instrument filters/system response
 	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
 		for( int id = 0; id < this->nDecimationLevel; id++ ) {
+			cout << npts2 << endl;
 			for( int i = 0; i < npts2; i++ ) {
 				freq = (i + 1)/dr[id]/this->windowLength;
 				period = 1/freq;
 				temp = ComplexDouble( 0, 0 );
-				for( int j = 0; j < ts.ch[ich].correction[0].getDim(0) - 1; j++ ) {
+				for( int j = 0; j < ts.ch[ich].correction[0].getDim(1) - 1; j++ ) {
 					if( freq > ts.ch[ich].systemResponse[0]( j, 0 ).real() && freq <= ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() ) {
 						w = (ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - freq)/(ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - ts.ch[ich].systemResponse[0]( j, 0 ).real());
 						RE = ts.ch[ich].systemResponse[0]( j, 1 ).real()*w + ts.ch[ich].systemResponse[0]( j + 1, 1 ).real()*( 1 - w );
@@ -111,6 +114,11 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 			}
 		}
 	}
+
+	// checkouts
+	if( ts.mtu.mtuTsBand == phoenixTsBand_t(5) )
+		for( int ich = 0; ich < ts.ch.size(); ich++ )
+			cout << ts.ch[ich].correction[0](0,1279) << endl;
 }
 
 void Extract_FCs_FixedWindowLength::set_parameters()

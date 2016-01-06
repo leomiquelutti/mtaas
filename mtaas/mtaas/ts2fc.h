@@ -3,18 +3,6 @@
 
 #include "stdafx.h"
 
-class SetUpRemoteReferenceConcomitance {
-public:
-
-	SetUpRemoteReferenceConcomitance() {};
-	~SetUpRemoteReferenceConcomitance() {};	
-
-	SetUpRemoteReferenceConcomitance(const SetUpRemoteReferenceConcomitance& element) {*this = element;};
-    SetUpRemoteReferenceConcomitance& operator = (const SetUpRemoteReferenceConcomitance& element);
-
-	static void find_concomitance_for_stations( std::vector<StationBase> &station );
-};
-
 class Extract_FCs_FixedWindowLength {
 public:
 
@@ -29,6 +17,7 @@ public:
 
 	static void get_all_FCs( std::vector<StationBase> &station );
 	void set_corrections( StationFile &ts );
+	void get_fcs( StationFile &ts, StationFile &ts2 );
 
 private:
 
