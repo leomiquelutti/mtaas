@@ -42,14 +42,16 @@ int main()
 	//// checkouts
 	//for( int istn = 0; istn < station.size(); istn++ ) {
 	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {		
-	//		station[istn].ts[its].timeVector[0].print();
-	//		//std::cout << " " << " ";
-	//		//for( int irow = 0; irow < station[istn].ts[its].ch[0].systemResponseFreqs[0].getDim(0); irow++ ) {
-	//		//	std::cout << station[istn].ts[its].ch[0].systemResponseFreqs[0](irow) << " ";
-	//		//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )				
-	//		//		std::cout << station[istn].ts[its].ch[ich].correction[0](irow) << " ";
-	//		//	std::cout << std::endl;
-	//		//}
+	//		//station[istn].ts[its].timeVector[0].print();
+	//		//std::cout << endl << istn << " " << its << endl;
+	//		for( int irow = 0; irow < station[istn].ts[its].ch[0].systemResponseFreqs[0].getDim(0); irow++ ) {
+	//			//std::cout << station[istn].ts[its].ch[0].systemResponseFreqs[0](irow) << " ";
+	//			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )	{
+	//				station[istn].ts[its].ch[ich].gain = 1;
+	//				std::cout << station[istn].ts[its].ch[ich].gain << " ";
+	//			}
+	//			std::cout << std::endl;
+	//		}
 	//	}
 	//			std::cout << std::endl;
 	//}

@@ -77,11 +77,12 @@ class ExtractorMTU
 {
 public:
 	ExtractorMTU():
-		empirical_factor(1/8),
+		empirical_factor((double)1/8),
 		tagsize(32),
-		FS(0x7FFFFF) {
-			ECV = 1.E6*empirical_factor;    // convert V/m to mV/km
-			HCV = 1.E9;     // convert T to nT
+		FS(0x7FFFFF),
+		HCV(1e9),     // convert T to nT
+		ECV(1e6)  {
+			ECV *= empirical_factor;    // convert V/m to mV/km
 		}
 
 	ExtractorMTU(const ExtractorMTU& element) {*this = element;};

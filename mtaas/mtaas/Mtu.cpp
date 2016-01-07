@@ -858,9 +858,9 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
 	for( int i = 0; i < auxCh.size(); i++ ) {
 
 		// define channel type
-		if( auxCh[i].name.substr( 0, 0 ).compare( "h" ) || auxCh[i].name.substr( 0, 0 ).compare( "H" ) )
+		if( auxCh[i].name.substr( 0, 1 ).compare( "h" ) == 0 || auxCh[i].name.substr( 0, 1 ).compare( "H" ) == 0 )
 			auxCh[i].channel_type = CHANNEL_TYPE_H;
-		else if( auxCh[i].name.substr( 0, 0 ).compare( "e" ) || auxCh[i].name.substr( 0, 0 ).compare( "E" ) )
+		else if( auxCh[i].name.substr( 0, 1 ).compare( "e" ) == 0 || auxCh[i].name.substr( 0, 1 ).compare( "E" ) == 0 )
 			auxCh[i].channel_type = CHANNEL_TYPE_E;	
 		else {
 			std::cout << "first letter of channel name differenting than E(e) or H(h). terminating the program" << std::endl;
@@ -901,7 +901,7 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
 			}
 
 			auxCh[i].gain = this->tbl.hgn;
-			auxCh[i].countConversion = this->HCV/this->FS;
+			auxCh[i].countConversion = (double)(this->HCV/this->FS);			
 		}
 
 		// electric
@@ -920,7 +920,7 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
 			}
 			
 			auxCh[i].gain = this->tbl.egn;
-			auxCh[i].countConversion = this->ECV/this->FS/auxCh[i].dipoleLength;
+			auxCh[i].countConversion = (double)(this->ECV/this->FS/auxCh[i].dipoleLength);
 		}
 	}
 }

@@ -32,13 +32,67 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 
 			fc.set_corrections( station[istn].ts[its] );
 
-			// checkouts
-			if( station[istn].ts[its].mtu.mtuTsBand == phoenixTsBand_t(5) )
-				for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
-					station[istn].ts[its].ch[ich].correction->print();
+			//// checkouts
+			//if( station[istn].ts[its].mtu.mtuTsBand == phoenixTsBand_t(5) )
+			//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
+			//		station[istn].ts[its].ch[ich].correction->print();
 
-			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
+			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ )
+				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
+		}
+	}
+}
+
+void Extract_FCs_FixedWindowLength::extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination )
+{
+	size_t nSegments;
+	size_t istn = idxStn, its = idxTs, icomb = idxCombination;
+
+	Combination auxComb = station[istn].ts[its].combination[icomb];
+	
+	matCUDA::Array<double> auxReal( this->windowLength );
+	matCUDA::Array<ComplexDouble> auxCplx( this->windowLength );
+
+	for( int ideci = 0; ideci < this->nDecimationLevel; ideci++ ) {
+
+		nSegments = floor( station[istn].ts[its].ch[0].timeSeries[0].getDim(0)/( this->windowLength*( 1 - this->overlap ) ) );
+
+		for( int iseg = 0; iseg < nSegments; iseg++ ) {
+
+			//// single site
+			//if( station[istn].ts[its].combination[icomb].numberOfConcomitantTs == 1 ) {
+			//}
+			//// remote references
+			//else
+			//{
+			//}
+
+			// transform segments of TS in FC
+			for( int iblock = 0; iblock < auxComb.idxBgn[0].getDim(0); iblock++ ) {
+					
+				size_t istart = auxComb.idxBgn[0](iblock,0), iend = istart + this->windowLength - 1;
+
+				while( iend < auxComb.idxEnd[0](iblock,0) ) {
+
+					// TEST IT NOW!!!!
+					for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
+						auxReal = station[istn].ts[its].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
+						auxReal = auxReal.detrend();
+						auxCplx = fft( &auxReal );
+					}
+
+					istart += floor( this->windowLength*( 1 - this->overlap ) );
+					iend = istart + this->windowLength - 1;
+				}
 			}
+						
+			// transform segments of RR in FC
+
+			// get in
+
+			// get inRR
+
+			// get out
 		}
 	}
 }
@@ -69,6 +123,18 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 				ts.ch[ich].correction[0]( id, i ) = ts.ch[ich].countConversion*t;
 		}
 	}
+
+	//// checkouts
+	//if( ts.mtu.mtuTsBand == phoenixTsBand_t(5) ) {
+	//	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+	//		cout << ts.ch[ich].name << endl;
+	//		cout << ts.ch[ich].correction[0]( 0, 0) << endl;
+	//		//for( int i = 0; i < ts.ch[ich].correction[0].getDim(1) - 1; i++ ) {
+	//		//	cout << ts.ch[ich].correction[0]( 0, i) << endl;
+	//		//}
+	//		//cout << endl;
+	//	}
+	//}
 	
 	// corrections for low pass decimation filters 
 	// corrects for effect of low pass filters on all decimation levels
@@ -88,19 +154,32 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 		}
 	}
 
+	//// checkouts
+	//if( ts.mtu.mtuTsBand == phoenixTsBand_t(5) ) {
+	//	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+	//		cout << ts.ch[ich].name << endl;
+	//		cout << ts.ch[ich].correction[0]( 0, 0) << endl;
+	//		//for( int i = 0; i < ts.ch[ich].correction[0].getDim(1) - 1; i++ ) {
+	//		//	cout << ts.ch[ich].correction[0]( 0, i) << endl;
+	//		//}
+	//		//cout << endl;
+	//	}
+	//}
+
 	// corrections for analogue instrument filters/system response
 	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
 		for( int id = 0; id < this->nDecimationLevel; id++ ) {
-			cout << npts2 << endl;
 			for( int i = 0; i < npts2; i++ ) {
 				freq = (i + 1)/dr[id]/this->windowLength;
 				period = 1/freq;
 				temp = ComplexDouble( 0, 0 );
-				for( int j = 0; j < ts.ch[ich].correction[0].getDim(1) - 1; j++ ) {
-					if( freq > ts.ch[ich].systemResponse[0]( j, 0 ).real() && freq <= ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() ) {
-						w = (ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - freq)/(ts.ch[ich].systemResponse[0]( j + 1, 0 ).real() - ts.ch[ich].systemResponse[0]( j, 0 ).real());
-						RE = ts.ch[ich].systemResponse[0]( j, 1 ).real()*w + ts.ch[ich].systemResponse[0]( j + 1, 1 ).real()*( 1 - w );
-						IM = ts.ch[ich].systemResponse[0]( j, 1 ).imag()*w + ts.ch[ich].systemResponse[0]( j + 1, 1 ).imag()*( 1 - w );
+				for( int j = 0; j < ts.ch[ich].systemResponseFreqs[0].getDim(0) - 1; j++ ) {
+					if( freq > ts.ch[ich].systemResponseFreqs[0]( j + 1 ) && freq <= ts.ch[ich].systemResponseFreqs[0]( j ) ) {
+						
+						w = (ts.ch[ich].systemResponseFreqs[0]( j ) - freq)/(ts.ch[ich].systemResponseFreqs[0]( j ) - ts.ch[ich].systemResponseFreqs[0]( j + 1 ));
+						RE = ts.ch[ich].systemResponse[0]( j + 1, 1 ).real()*w + ts.ch[ich].systemResponse[0]( j, 1 ).real()*( 1 - w );
+						IM = ts.ch[ich].systemResponse[0]( j + 1, 1 ).imag()*w + ts.ch[ich].systemResponse[0]( j, 1 ).imag()*( 1 - w );
+						
 						auxID = true;
 						break;
 					}
@@ -108,6 +187,7 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 				if(auxID) {
 					temp = ComplexDouble( RE, IM )*ts.ch[ich].gain;
 					ts.ch[ich].correction[0]( id, i ) = ts.ch[ich].correction[0]( id, i )/temp;
+					auxID = false;
 				}
 				else
 					ts.ch[ich].correction[0]( id, i ) = 0;
@@ -115,10 +195,14 @@ void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
 		}
 	}
 
-	// checkouts
-	if( ts.mtu.mtuTsBand == phoenixTsBand_t(5) )
-		for( int ich = 0; ich < ts.ch.size(); ich++ )
-			cout << ts.ch[ich].correction[0](0,1279) << endl;
+	//// checkouts
+	//if( ts.mtu.mtuTsBand == phoenixTsBand_t(5) ) {
+	//	for( int ich = 0; ich < ts.ch.size(); ich++ ) {
+	//		//for( int i = 0; i < ts.ch[ich].correction[0].getDim(1) - 1; i++ )
+	//			cout << ts.ch[ich].correction[0](0,1279) << " ";
+	//	}
+	//		cout << endl;
+	//}
 }
 
 void Extract_FCs_FixedWindowLength::set_parameters()
