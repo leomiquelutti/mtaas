@@ -47,6 +47,7 @@ Channel& Channel::operator = (const Channel& element)
 	this->orientationVer = element.orientationVer;
 	this->name = element.name;
 	this->gain = element.gain;
+	this->fc = element.fc;
 
 	return *this;
 }
@@ -64,6 +65,9 @@ Combination& Combination::operator = (const Combination& element)
 {
 	this->idxStn = element.idxStn;
 	this->idxTs = element.idxTs;
+	this->idxBgn = element.idxBgn;
+	this->idxEnd = element.idxEnd;
+	this->numberOfConcomitantTs = element.numberOfConcomitantTs;
 
 	return *this;
 }

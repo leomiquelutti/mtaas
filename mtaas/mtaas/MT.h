@@ -179,7 +179,7 @@ public:
 	matCUDA::Array<ComplexDouble> *systemResponse;
 	matCUDA::Array<double>	*systemResponseFreqs;
 	matCUDA::Array<ComplexDouble> *correction;
-	//matCUDA::Array<ComplexDouble> *fc;
+	matCUDA::Array<ComplexDouble> *fc;
 	double countConversion;
 	double orientationHor;
 	double orientationVer;

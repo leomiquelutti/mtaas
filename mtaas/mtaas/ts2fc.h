@@ -18,6 +18,8 @@ public:
 	static void get_all_FCs( std::vector<StationBase> &station );
 	void set_corrections( StationFile &ts );
 	void extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination );
+	void correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction );
+	void initialize_FrequencyResponses();
 
 private:
 

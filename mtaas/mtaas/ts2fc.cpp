@@ -23,6 +23,14 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 {
 	size_t auxN = 0;
 	bool auxAcqstnCntns = true;
+
+	// allocate memory for fc
+	for( int istn = 0; istn < station.size(); istn++ ) 
+		for( int its = 0; its < station[istn].ts.size(); its++ ) 
+			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) 
+				station[istn].ts[its].ch[ich].fc = new matCUDA::Array<ComplexDouble>(10);
+
+
 	for( int istn = 0; istn < station.size(); istn++ ) {
 		for( int its = 0; its < station[istn].ts.size(); its++ ) {
 
@@ -31,14 +39,15 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 			Extract_FCs_FixedWindowLength fc( auxAcqstnCntns, auxN );
 
 			fc.set_corrections( station[istn].ts[its] );
-
+	
 			//// checkouts
 			//if( station[istn].ts[its].mtu.mtuTsBand == phoenixTsBand_t(5) )
 			//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
 			//		station[istn].ts[its].ch[ich].correction->print();
 
-			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ )
+			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
 				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
+			}
 		}
 	}
 }
@@ -46,55 +55,79 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 void Extract_FCs_FixedWindowLength::extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination )
 {
 	size_t nSegments;
-	size_t istn = idxStn, its = idxTs, icomb = idxCombination;
+	size_t istn = idxStn, its = idxTs, icomb = idxCombination; // index just to help
+	size_t istart = 0, iend = istart + this->windowLength - 1; // index for reading concomitant TSs
+	size_t winPace = floor( this->windowLength*( 1 - this->overlap ) );
 
 	Combination auxComb = station[istn].ts[its].combination[icomb];
 	
 	matCUDA::Array<double> auxReal( this->windowLength );
-	matCUDA::Array<ComplexDouble> auxCplx( this->windowLength );
+	matCUDA::Array<ComplexDouble> auxCmplx( floor(this->windowLength/2) + 1 );
 
-	for( int ideci = 0; ideci < this->nDecimationLevel; ideci++ ) {
+	// sweep through the "blocks" of data - one block is a piecewise continuous set of data
+	for( int iblock = 0; iblock < auxComb.idxBgn[0].getDim(0); iblock++ ) {
 
-		nSegments = floor( station[istn].ts[its].ch[0].timeSeries[0].getDim(0)/( this->windowLength*( 1 - this->overlap ) ) );
+		// sweep through the decimation levels of each block
+		for( int ideci = 0; ideci < this->nDecimationLevel; ideci++ ) {
 
-		for( int iseg = 0; iseg < nSegments; iseg++ ) {
+			nSegments = floor( ( auxComb.idxEnd[0](iblock,0) - auxComb.idxBgn[0](iblock,0) )/( this->windowLength*( 1 - this->overlap ) ) );
+			cout << nSegments << endl;
 
-			//// single site
-			//if( station[istn].ts[its].combination[icomb].numberOfConcomitantTs == 1 ) {
-			//}
-			//// remote references
-			//else
-			//{
-			//}
+			// sweep through the segments of each decimation level of each block
+			for( int iseg = 0; iseg < nSegments; iseg++ ) {
 
-			// transform segments of TS in FC
-			for( int iblock = 0; iblock < auxComb.idxBgn[0].getDim(0); iblock++ ) {
+				for( int iInvolvedTs = 0; iInvolvedTs < auxComb.numberOfConcomitantTs + 1; iInvolvedTs++ ) {
 					
-				size_t istart = auxComb.idxBgn[0](iblock,0), iend = istart + this->windowLength - 1;
-
-				while( iend < auxComb.idxEnd[0](iblock,0) ) {
-
-					// TEST IT NOW!!!!
-					for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
-						auxReal = station[istn].ts[its].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
-						auxReal = auxReal.detrend();
-						auxCplx = fft( &auxReal );
-					}
-
-					istart += floor( this->windowLength*( 1 - this->overlap ) );
+					istart = auxComb.idxBgn[0](iblock,iInvolvedTs);
 					iend = istart + this->windowLength - 1;
+
+					// transform segments of "this" TS and its concomitants combinations in FC
+					while( iend < auxComb.idxEnd[0](iblock,iInvolvedTs) ) {
+
+						// TEST IT NOW!!!!
+						// get FCs for station of interest (this one)
+						if( iInvolvedTs == 0 ) {
+							for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
+								auxReal = station[istn].ts[its].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
+								auxReal = auxReal.detrend();
+								auxCmplx = fft( &auxReal );
+								this->correct_fcs( &auxCmplx, &station[istn].ts[its].ch[ich].correction[0] );
+								station[istn].ts[its].ch[ich].fc = &auxCmplx;
+							}
+						}
+						// get FCs for remote stations
+						else {
+							size_t auxCombStn = auxComb.idxStn[iInvolvedTs - 1];
+							size_t auxCombTs = auxComb.idxTs[iInvolvedTs - 1];
+
+							for( int ich = 0; ich < 2; ich++ ) { // TODO - IMPROVE this number"2"
+								auxReal = station[auxCombStn].ts[auxCombTs].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
+								auxReal = auxReal.detrend();
+								auxCmplx = fft( &auxReal );
+								this->correct_fcs( &auxCmplx, &station[auxCombStn].ts[auxCombTs].ch[ich].correction[0] );
+								station[auxCombStn].ts[auxCombTs].ch[ich].fc = &auxCmplx;
+							}
+						}
+
+						istart += winPace;
+						iend = istart + this->windowLength - 1;
+					}
 				}
+
+				// get in
+
+				// get inRR
+
+				// get out
 			}
-						
-			// transform segments of RR in FC
-
-			// get in
-
-			// get inRR
-
-			// get out
 		}
 	}
+}
+
+void Extract_FCs_FixedWindowLength::correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction )
+{
+	for( int i = 0; i < this->nFreq; i++ )
+		data[0]( i ) = data[0]( i + 1 )*correction[0]( i );
 }
 
 void Extract_FCs_FixedWindowLength::set_corrections( StationFile &ts )
@@ -247,7 +280,6 @@ matCUDA::Array<int> Extract_FCs_FixedWindowLength::get_fc_distribution( matCUDA:
 	size_t nElements = this->firstsLinesToRepeatFromFcDistribution*this->nDecimationLevel + auxFcDistribution.getDim(0) - this->firstsLinesToRepeatFromFcDistribution;
 	size_t irow= -1;
 	double changeFactor = (double)this->windowLength/(double)this->fcDraftMadeForWinLengthOf;
-	std::cout << changeFactor << std::endl;
 
 	Array<int> fcDistribution(nElements,3);
 	for( int nDeci = 0; nDeci < this->nDecimationLevel; nDeci++ ) {
