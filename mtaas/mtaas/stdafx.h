@@ -17,6 +17,7 @@
 #include <complex>
 #include <vector>
 
+#define N_CHANNEL_INPUTS 2
 typedef std::complex<double> Complex;
 
 #include "matCUDA.h"

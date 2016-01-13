@@ -32,6 +32,7 @@ StationFile& StationFile::operator = (const StationFile& element)
 	this->isThereRR = element.isThereRR;
 	this->numberOfCombinations = element.numberOfCombinations;
 	this->isAcquisitionContinuous = element.isAcquisitionContinuous;
+	this->maxDecimationLevel = element.maxDecimationLevel;
 
 	return *this;
 }
@@ -54,9 +55,14 @@ Channel& Channel::operator = (const Channel& element)
 
 FrequencyResponses& FrequencyResponses::operator = (const FrequencyResponses& element)
 {
+	this->deciLevel = element.deciLevel;
+	this->lowerLimitBandWidth = element.lowerLimitBandWidth;
+	this->upperLimitBandWidth = element.upperLimitBandWidth;
 	this->frequency = element.frequency;
 	this->in = element.in;
 	this->out = element.out;
+	this->inRR = element.inRR;
+	this->elementCounter = element.elementCounter;
 
 	return *this;
 }
@@ -68,6 +74,15 @@ Combination& Combination::operator = (const Combination& element)
 	this->idxBgn = element.idxBgn;
 	this->idxEnd = element.idxEnd;
 	this->numberOfConcomitantTs = element.numberOfConcomitantTs;
+	this->measuredFrequencies = element.measuredFrequencies;
+	this->fr = element.fr;
+	this->deciLevelEachBlock = element.deciLevelEachBlock;
+	this->nBlocks = element.nBlocks;
+	this->lengthTsEachBlock = element.lengthTsEachBlock;
+	this->fcDistribution = element.fcDistribution;
+	this->samplFreqEachDeciLevel = element.samplFreqEachDeciLevel;
+	this->nFreq = element.nFreq;
+	this->nDeci = element.nDeci;
 
 	return *this;
 }
@@ -104,6 +119,17 @@ void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE
 		Combination::define_combinations_for_ss( station );
 	}
 
+	//// checkouts
+	//for( int istn = 0; istn < station.size(); istn++ ) {
+	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {
+	//		for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
+	//			cout << station[istn].ts[its].combination[icomb].idxEnd[0](0,0) - station[istn].ts[its].combination[icomb].idxBgn[0](0,0) + 1 << endl;
+	//		}
+	//		cout << endl;
+	//	}
+	//			std::cout << std::endl;
+	//}
+
 	switch(ts2fft_type) 
 	{
 	case FIXED_WINDOW_LENGTH:
@@ -132,6 +158,7 @@ void Combination::define_combinations_for_ss( std::vector<StationBase> &station 
 			station[istn].ts[its].combination[0].idxTs.resize(1);
 
 			station[istn].ts[its].combination[0].numberOfConcomitantTs = 1;
+			station[istn].ts[its].combination[0].nBlocks = 1;
 			station[istn].ts[its].combination[0].idxStn[0] = istn;
 			station[istn].ts[its].combination[0].idxTs[0] = its;
 

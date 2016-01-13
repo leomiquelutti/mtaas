@@ -96,6 +96,10 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 
 	// fill in correction vectors
 	this->read_cts_file( auxCh );
+
+	// fill in maximun and minimum allowed frequencies
+	auxTs.maxFreqInHertz = (auxCh[0].systemResponseFreqs[0].max())(0,0);
+	auxTs.minFreqInHertz = (auxCh[0].systemResponseFreqs[0].min())(0,0);
 	
 	// get mtu raw data
 	*this = auxTs.mtu;

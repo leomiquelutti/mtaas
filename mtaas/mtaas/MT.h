@@ -113,12 +113,36 @@ private:
 	double declinationInput;
 };
 
+// class containing info from each Channel within each TS
+class FrequencyResponses
+{
+public:
+	
+	FrequencyResponses() :
+		elementCounter(0) {};
+	~FrequencyResponses() {};
+
+	FrequencyResponses(const FrequencyResponses& element) {*this = element;};
+    FrequencyResponses& operator = (const FrequencyResponses& element);
+	
+	double frequency;
+	size_t elementCounter;
+	size_t deciLevel;
+	size_t lowerLimitBandWidth;
+	size_t upperLimitBandWidth;
+	//size_t numberOfStationsInvolved;
+	matCUDA::Array<ComplexDouble> *in;
+	matCUDA::Array<ComplexDouble> *inRR;
+	matCUDA::Array<ComplexDouble> *out;
+};
+
 class Combination
 {
 public:
 
 	Combination() :
-		numberOfConcomitantTs(1) {};
+		numberOfConcomitantTs(1),
+		nBlocks(1) {};
 	~Combination() {};	
 
 	Combination(const Combination& element) {*this = element;};
@@ -126,39 +150,28 @@ public:
 
 	// index to reference for which Station and which Ts there is concomitance
 	size_t numberOfConcomitantTs;
+	size_t nBlocks;
+	size_t nFreq;
+	size_t nDeci;
 	std::vector<size_t> idxStn;
 	std::vector<size_t> idxTs;
 	matCUDA::Array<int> *idxBgn;
 	matCUDA::Array<int> *idxEnd;
+	std::vector<double> measuredFrequencies;
+	std::vector<FrequencyResponses> fr;
+	std::vector<size_t> deciLevelEachBlock;
+	std::vector<size_t> lengthTsEachBlock;
+	std::vector<double> samplFreqEachDeciLevel;
+	matCUDA::Array<int> *fcDistribution;
 
 	static void define_combinations_for_rr( std::vector<StationBase> &station );
 	static void define_combinations_for_ss( std::vector<StationBase> &station );
 };
 
 // class containing info from each Channel within each TS
-class FrequencyResponses
-{
-public:
-	
-	FrequencyResponses() :
-		numberOfStationsInvolved(1) {};
-	~FrequencyResponses() {};
-
-	FrequencyResponses(const FrequencyResponses& element) {*this = element;};
-    FrequencyResponses& operator = (const FrequencyResponses& element);
-	
-	double frequency;
-	size_t numberOfStationsInvolved;
-	matCUDA::Array<ComplexDouble> *in;
-	matCUDA::Array<ComplexDouble> *inRR;
-	matCUDA::Array<ComplexDouble> *out;
-};
-
-// class containing info from each Channel within each TS
 class Channel
 {
 public:
-
 	
 	Channel() : 
 		countConversion(1),
@@ -218,6 +231,9 @@ public:
 	double			eyDipoleLength;
 	Date			date;
 
+	size_t			maxDecimationLevel;
+	matCUDA::Array<int> *maxFcDist;
+
 	bool			isThereRR;
 	size_t			numberOfCombinations;
 	bool			isAcquisitionContinuous;
@@ -231,7 +247,6 @@ public:
 	// to store FCs corrected for each frequency, in order to calculate Z
 	// stores the possible different combinations allowed
 	std::vector<Combination> combination;
-	std::vector<std::vector<FrequencyResponses>> fr;
 
 	// functions
 	bool			is_acquisition_continuos( Array<double> *timeVector );

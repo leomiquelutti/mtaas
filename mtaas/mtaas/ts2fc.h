@@ -6,7 +6,7 @@
 class Extract_FCs_FixedWindowLength {
 public:
 
-	Extract_FCs_FixedWindowLength( bool acquisitionContinuous, int N, int winLngth = 4096 );
+	Extract_FCs_FixedWindowLength( int winLngth = 4096 );
 
 	~Extract_FCs_FixedWindowLength() {};	
 
@@ -16,17 +16,20 @@ public:
 	matCUDA::Array<int> *fcDistribution;
 
 	static void get_all_FCs( std::vector<StationBase> &station );
-	void set_corrections( StationFile &ts );
+	void set_corrections( std::vector<StationBase> &station );
 	void extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination );
 	void correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction );
 	void initialize_FrequencyResponses();
+	void allocate_memory_for_ch_fc( std::vector<StationBase> &station );
+	void deallocate_memory_for_ch_fc( std::vector<StationBase> &station );
+	void allocate_memory_for_FrequencyResponses( std::vector<StationBase> &station );
 
 private:
 
 	// members
 	size_t windowLength;
 	size_t fcDraftMadeForWinLengthOf;
-	size_t nDecimationLevel;
+	//size_t nDecimationLevel;
 	size_t factorOfEachDecimationLevel;
 	double overlap;
 	size_t minNumDataPerFreq;
@@ -36,12 +39,16 @@ private:
 	size_t nPointsTS;
 	bool isAcquisitionContinuous;
 	size_t firstsLinesToRepeatFromFcDistribution;
+	matCUDA::Array<int> *auxFcDistribution;
+	matCUDA::Array<double> *auxDpss;
+	size_t dpssNW;
+	size_t dpssDegree;
 
 	// function
-	size_t determine_decimation_level( matCUDA::Array<int> auxFcDistribution );
-	matCUDA::Array<int> get_draft_of_fc_distribution();
+	size_t determine_decimation_level( size_t nPoints );
+	void get_draft_of_fc_distribution();
 	void set_parameters();
-	matCUDA::Array<int> get_fc_distribution( matCUDA::Array<int> auxFcDistribution );
+	matCUDA::Array<int> get_fc_distribution( size_t maxDecimationLevel );
 	//void set_corrections( std::vector<Channel> &ch, double samplingFrequency );
 };
 
