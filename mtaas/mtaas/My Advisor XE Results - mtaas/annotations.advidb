@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <!DOCTYPE IntelParallelAdvisorAnnotationDatabase SYSTEM "IntelParallelAdvisorAnnotationDatabase.dtd"> -->
+<IntelParallelAdvisorAnnotationDatabase
+  version="0.9.2"
+  database="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\My Advisor XE Results - mtaas\annotations.advidb"
+  next_handle="1"
+  next_site="1"
+  next_task="1">
+  <language name="cpp" pattern=".*\.(c|h|cc|hh|c++|h++|cpp|hpp|cp|hp|cxx|hxx|C|H|CPP|HPP|tcc|i|ii|m|mi|mm|M|mii)" />
+  <language name="c_sharp" pattern=".*\.cs" />
+  <language name="fortran" pattern=".*\.(f|F|for|FOR|fpp|FPP|ftn|FTN|f77|F77|f90|F90|f95|F95|f03|F03|f08|F08|fi|fd)" />
+  <language name="unknown" pattern=".*" />
+  <source_exclude name="*\source_cache\temporary_files\*" />
+  <source_ide_project name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\mtaas.vcxproj" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\DirectoryProperties.cpp" modification_bin_time="56731fb2" language="cpp" lines="356" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\DirectoryProperties.h" modification_bin_time="5669f018" language="cpp" lines="84" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\dllmain.cpp" modification_bin_time="55084cbf" language="cpp" lines="18" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\Engine.cpp" modification_bin_time="5660b373" language="cpp" lines="161" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\Engine.h" modification_bin_time="565f5cd3" language="cpp" lines="132" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\EngineRobust.cpp" modification_bin_time="566884e3" language="cpp" lines="77" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\fc2z.cpp" modification_bin_time="569fd352" language="cpp" lines="17" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\fc2z.h" modification_bin_time="569f7c5c" language="cpp" lines="16" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\GetDeclination.cpp" modification_bin_time="565e2ea6" language="cpp" lines="873" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\GetDeclination.h" modification_bin_time="565e2e9a" language="cpp" lines="65" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\main.cpp" modification_bin_time="569e9016" language="cpp" lines="112" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\MT.cpp" modification_bin_time="569f7e58" language="cpp" lines="212" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\MT.h" modification_bin_time="569ff3e5" language="cpp" lines="289" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\Mtu.cpp" modification_bin_time="56942218" language="cpp" lines="993" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\Mtu.h" modification_bin_time="568ec571" language="cpp" lines="143" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\parameters.cpp" modification_bin_time="569ff177" language="cpp" lines="61" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\parameters.h" modification_bin_time="569ff3e5" language="cpp" lines="29" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\stdafx.cpp" modification_bin_time="55084cbe" language="cpp" lines="8" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\stdafx.h" modification_bin_time="5695024f" language="cpp" lines="25" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\targetver.h" modification_bin_time="55084cbe" language="cpp" lines="8" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\ts2fc.cpp" modification_bin_time="56a0e8d8" language="cpp" lines="772" />
+  <file name="C:\Users\Usuario\Documents\GitHub\mtaas\mtaas\mtaas\ts2fc.h" modification_bin_time="569f839d" language="cpp" lines="70" />
+  <statistics files="22" lines="4521" annotations="0" site_annotations="0" task_annotations="0" lock_annotations="0" other_annotations="0" />
+</IntelParallelAdvisorAnnotationDatabase>

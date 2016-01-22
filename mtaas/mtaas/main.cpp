@@ -21,7 +21,7 @@ int main()
 	TS_TO_FFT_TYPE ts2fft_type = FIXED_WINDOW_LENGTH;
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;
 	RR_OR_SS_TYPE rrorss_type = SINGLE_SITE;
-	std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu";
+	std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu ts5";
 	//std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu";
 
 	// object to explore the main path and its subfolders
@@ -59,6 +59,15 @@ int main()
 	// extract corrected (to physical units) Fourier coefficients 
 	StationBase::get_all_FCs( station, ts2fft_type, rrorss_type );
 
+	matCUDA::Array<double> *test;
+	test = new matCUDA::Array<double>(10);
+	
+	(*test)(0,0) = 1;
+	test[0](0,0) = 1;
+
+	// evaluate Z 
+	StationBase::get_Z( station, estimator_type );
+
 	//// checkouts
 	//for( int istn = 0; istn < station.size(); istn++ ) {
 	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {		
@@ -69,6 +78,8 @@ int main()
 	//	}
 	//	std::cout << std::endl;
 	//}
+
+
 
 	// delete everything allocated
 	// TODO

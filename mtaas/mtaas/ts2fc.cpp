@@ -1,8 +1,8 @@
 #include "ts2fc.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <cmath>
+//#include <stdlib.h>
+//#include <stdio.h>
+//#include <math.h>
+//#include <cmath>
 
 // constructor
 Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( int winLngth ) :
@@ -21,9 +21,6 @@ Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( int winLngth ) :
 
 void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &station )
 {
-	//size_t auxN = 0;
-	//bool auxAcqstnCntns = true;
-		
 	Extract_FCs_FixedWindowLength fc;
 
 	// allocate memory for ch[ich].fc
@@ -37,21 +34,302 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 	//	for( int its = 0; its < station[istn].ts.size(); its++ )
 	//		station[istn].ts[its].combination[0].fcDistribution[0].print();
 
-
 	// set corrections to be used
 	fc.set_corrections( station );
 
 	// DO IT - retrieve FCs
-	for( int istn = 0; istn < station.size(); istn++ ) {
-		for( int its = 0; its < station[istn].ts.size(); its++ ) {
-
-			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ )
+	for( int istn = 0; istn < station.size(); istn++ )
+		for( int its = 0; its < station[istn].ts.size(); its++ )
+			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
 				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
-		}
-	}
+			}
+
+	station[0].ts[0].ch[0].fc[0].print();
 
 	// free memory
 	fc.deallocate_memory_for_ch_fc( station );
+}
+
+//void Extract_FCs_FixedWindowLength::get_in( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  )
+//{
+//	size_t idx = 0;
+//	size_t lowerLimit = 0, upperLimit = 0;
+//
+//	for( int ifreq = 0; ifreq < station[iStnIn].ts[iTsIn].combination[iComb].fr.size(); ifreq++ ) {
+//		
+//		idx = idxSeg*station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].nFCsPerSegment;
+//		lowerLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].lowerLimitBandWidth;
+//		upperLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].upperLimitBandWidth;
+//		
+//		for( int ifc = lowerLimit; ifc < upperLimit; ifc++ ) {
+//			for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ )
+//				station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].in[0]( idx, ich ) = station[iStnIn].ts[iTsIn].ch[ich].fc[0]( ifc );
+//			idx++;
+//		}
+//	}
+//}
+//
+//void Extract_FCs_FixedWindowLength::get_out( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  )
+//{
+//	size_t idx = 0;
+//	size_t lowerLimit = 0, upperLimit = 0;
+//
+//	for( int ifreq = 0; ifreq < station[iStnIn].ts[iTsIn].combination[iComb].fr.size(); ifreq++ ) {
+//		
+//		idx = idxSeg*station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].nFCsPerSegment;
+//		lowerLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].lowerLimitBandWidth;
+//		upperLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].upperLimitBandWidth;
+//		
+//		for( int ifc = lowerLimit; ifc < upperLimit; ifc++ ) {
+//			for( int ich = N_CHANNEL_INPUTS; ich < station[iStnIn].ts[iTsIn].nChannels; ich++ )
+//				station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].out[0]( idx, ich - N_CHANNEL_INPUTS ) = station[iStnIn].ts[iTsIn].ch[ich].fc[0]( ifc );
+//			idx++;
+//		}
+//	}
+//}
+//
+//void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t iStnOut, const size_t iTsOut, const size_t idxSeg  )
+//void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  )
+//{
+//	size_t idx = 0;
+//	size_t lowerLimit = 0, upperLimit = 0;
+//
+//	for( int ifreq = 0; ifreq < station[iStnIn].ts[iTsIn].combination[iComb].fr.size(); ifreq++ ) {
+//		
+//		idx = idxSeg*station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].nFCsPerSegment;
+//		lowerLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].lowerLimitBandWidth;
+//		upperLimit = station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].upperLimitBandWidth;
+//		
+//		for( int ifc = lowerLimit; ifc < upperLimit; ifc++ ) {
+//			for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
+//				station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].in[0]( idx, ich ) = station[iStnIn].ts[iTsIn].ch[ich].fc[0]( ifc );
+//				station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].inRR[0]( idx, ich ) = station[iStnOut].ts[iTsOut].ch[ich].fc[0]( ifc );
+//			}
+//			for( int ich = N_CHANNEL_INPUTS; ich < station[iStnIn].ts[iTsIn].nChannels; ich++ )
+//				station[iStnIn].ts[iTsIn].combination[iComb].fr[ifreq].out[0]( idx, ich - N_CHANNEL_INPUTS ) = station[iStnIn].ts[iTsIn].ch[ich].fc[0]( ifc );
+//				
+//			idx++;
+//		}
+//	}
+//}
+
+void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &station, const size_t istn, const size_t its, const size_t icomb, const size_t iseg  )
+{
+	size_t idx = 0;
+	size_t lowerLimit = 0, upperLimit = 0;
+	size_t istn2 = 0, its2 = 0, idxInRR = 0;
+
+
+	for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) {
+		
+		idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
+		lowerLimit = station[istn].ts[its].combination[icomb].fr[ifreq].lowerLimitBandWidth;
+		upperLimit = station[istn].ts[its].combination[icomb].fr[ifreq].upperLimitBandWidth;
+			
+		// in
+		for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
+
+			for( int i = 500; i < 505; i++ )
+				cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
+			cout << endl;
+			//station[istn].ts[its].ch[ich].fc[0].print();
+			idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
+			for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
+				station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( idx++, ich ) = station[istn].ts[its].ch[ich].fc[0]( ifc );
+		}
+			
+		//out
+		for( int ich = N_CHANNEL_INPUTS; ich < station[istn].ts[its].ch.size(); ich++ ) {
+
+			for( int i = 500; i < 505; i++ )
+				cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
+			cout << endl;
+			//station[istn].ts[its].ch[ich].fc[0].print();
+			idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
+			for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
+				station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( idx++, ich - N_CHANNEL_INPUTS ) = station[istn].ts[its].ch[ich].fc[0]( ifc );
+		}
+			
+		//// inRR
+		//idxInRR = 0;
+		//for( int iaux = 0; iaux < station[istn].ts[its].combination[icomb].nConcomitantTs + 1; iaux++ ) {
+		//
+		//	if( iaux == 0 ) {
+		//		istn2 = istn;
+		//		its2 = its;
+		//	}
+		//	else {
+		//		istn2 = station[istn].ts[its].combination[icomb].idxStn[iaux - 1];
+		//		its2 = station[istn].ts[its].combination[icomb].idxTs[iaux - 1];
+		//	}
+		//	
+		//	for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
+		//		idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
+		//		cout << idx << " " << idxInRR << " " << istn << " " << its << " " << istn2 << " " << its2 << endl;
+		//		for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
+		//			station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( idx++, ich + idxInRR ) = station[istn2].ts[its2].ch[ich].fc[0]( ifc );
+		//	}
+		//
+		//	idxInRR += N_CHANNEL_INPUTS;
+		//}		
+
+		// inRR
+		idxInRR = 0;
+		for( int iaux = 0; iaux < station[istn].ts[its].combination[icomb].nConcomitantTs; iaux++ ) {
+
+			istn2 = station[istn].ts[its].combination[icomb].idxStn[iaux];
+			its2 = station[istn].ts[its].combination[icomb].idxTs[iaux];
+			
+			for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
+
+				for( int i = 500; i < 505; i++ )
+					cout << station[istn2].ts[its2].ch[ich].fc[0]( i ) << endl;
+				cout << endl;
+				//station[istn2].ts[its2].ch[ich].fc[0].print();
+				idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
+				for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
+					station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( idx++, ich + idxInRR ) = station[istn2].ts[its2].ch[ich].fc[0]( ifc );
+			}
+
+			idxInRR += N_CHANNEL_INPUTS;
+		}		
+
+		idx++;
+		
+		//for( int ifc = lowerLimit; ifc < upperLimit; ifc++ ) {
+		//	
+		//	// in
+		//	for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ )
+		//		station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( idx, ich ) = station[istn].ts[its].ch[ich].fc[0]( ifc );
+		//	
+		//	// out
+		//	for( int ich = N_CHANNEL_INPUTS; ich < station[istn].ts[its].ch.size(); ich++ )
+		//		station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( idx, ich - N_CHANNEL_INPUTS ) = station[istn].ts[its].ch[ich].fc[0]( ifc );
+		//	
+		//	// inRR
+		//	idxInRR = 0;
+		//	for( int iaux = 0; iaux = station[istn].ts[its].combination[icomb].nConcomitantTs + 1; iaux++ ) {
+		//
+		//		if( iaux == 0 ) {
+		//			istn2 = istn;
+		//			its2 = its;
+		//		}
+		//		else {
+		//			istn2 = station[istn].ts[its].combination[icomb].idxStn[iaux - 1];
+		//			its2 = station[istn].ts[its].combination[icomb].idxTs[iaux - 1];
+		//			upperLimit = N_CHANNEL_INPUTS;
+		//		}
+		//
+		//		for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ )
+		//			station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( idx, ich + idxInRR ) = station[istn2].ts[its2].ch[ich].fc[0]( ifc );
+		//		idxInRR += N_CHANNEL_INPUTS;
+		//	}		
+		//
+		//	idx++;
+		//}
+	}
+}
+
+void Extract_FCs_FixedWindowLength::extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination )
+{
+	size_t nSegments;
+	size_t istn = idxStn, its = idxTs, icomb = idxCombination; // index just to help
+	size_t istart = 0, iend = istart + this->windowLength - 1; // index for reading concomitant TSs
+	size_t winPace = floor( this->windowLength*( 1 - this->overlap ) );
+
+	Combination auxComb = station[istn].ts[its].combination[icomb];
+	
+	matCUDA::Array<double> auxReal( this->windowLength );		
+					
+	matCUDA::Array<ComplexDouble> auxCmplx( floor(this->windowLength/2) + 1 );
+
+	// index for writing in, inRR and out variables
+	size_t idx = 0;
+
+	// sweep through the "blocks" of data - one block is a piecewise continuous set of data
+	for( int iblock = 0; iblock < auxComb.idxBgn[0].getDim(0); iblock++ ) {
+
+		// sweep through the decimation levels of each block
+		for( int ideci = 0; ideci < auxComb.deciLevelEachBlock[iblock]; ideci++ ) {
+
+			nSegments = floor( ( auxComb.idxEnd[0](iblock,0) - auxComb.idxBgn[0](iblock,0) )/( this->windowLength*( 1 - this->overlap ) ) );
+			//cout << nSegments << endl;
+
+			// sweep through the segments of each decimation level of each block
+			for( int iseg = 0; iseg < nSegments; iseg++ ) {
+
+				//cout << iseg << " " << nSegments << endl << endl;
+				for( int iInvolvedTs = 0; iInvolvedTs < auxComb.nConcomitantTs + 1; iInvolvedTs++ ) {
+					
+					istart = auxComb.idxBgn[0](iblock,iInvolvedTs) + iseg*winPace;
+					iend = istart + this->windowLength - 1;
+
+					size_t iAuxStn = 0, iAuxTs = 0, upperLimit = 0;
+
+					// define which will be treated now
+					if( iInvolvedTs == 0 ) {
+						iAuxStn = istn;
+						iAuxTs = its;
+						upperLimit = station[iAuxStn].ts[iAuxTs].ch.size();
+					}
+					else {
+						iAuxStn = auxComb.idxStn[iInvolvedTs - 1];
+						iAuxTs = auxComb.idxTs[iInvolvedTs - 1];
+						upperLimit = N_CHANNEL_INPUTS;
+					}
+
+					// get FCs for stations of interest
+					for( int ich = 0; ich < upperLimit; ich++ ) {
+						
+						size_t imin = 500, imax = 505;
+						auxReal = station[iAuxStn].ts[iAuxTs].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
+						
+						//for( int i = imin; i < imax; i++ )
+						//	cout << auxReal( i ) << endl;
+						//cout<< endl;
+
+						auxReal = auxReal.detrend();
+						
+						//for( int i = imin; i < imax; i++ )
+						//	cout << auxReal( i ) << endl;
+						//cout<< endl;
+
+						auxReal = auxReal.elementWiseMultiply( this->auxDpss );
+						
+						//for( int i = imin; i < imax; i++ )
+						//	cout << auxReal( i ) << endl;
+						//cout<< endl;
+
+						auxCmplx = fft( &auxReal );
+						
+						//for( int i = imin; i < imax; i++ )
+						//	cout << auxCmplx( i ) << endl;
+						//cout<< endl;
+
+						this->correct_fcs( &auxCmplx, &station[iAuxStn].ts[iAuxTs].ch[ich].correction[0], ideci );
+						
+						//for( int i = imin; i < imax; i++ )
+						//	cout << auxCmplx( i ) << endl;
+						//cout<< endl;
+
+						//station[iAuxStn].ts[iAuxTs].ch[ich].fc[0].print();
+
+						//cout << iAuxStn << " " << iAuxTs << " " << ich << " " << endl;
+						station[iAuxStn].ts[iAuxTs].ch[ich].fc[0] = auxCmplx.submatrix( 0, this->nFreq - 1, 0, 0 );
+
+						//station[iAuxStn].ts[iAuxTs].ch[ich].fc[0].print();
+						
+						for( int i = imin; i < imax; i++ )
+							cout << station[iAuxStn].ts[iAuxTs].ch[ich].fc[0]( i ) << " " << auxCmplx(i) << endl;
+						cout<< endl;
+					}
+				}
+				cout << iseg << endl << endl;
+				this->get_in_out_inRR( station, istn, its, icomb, idx++ );
+			}
+	station[0].ts[0].ch[0].fc[0].print();
+		}
+	}
 }
 
 void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std::vector<StationBase> &station )
@@ -100,6 +378,7 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std:
 					station[istn].ts[its].combination[icomb].fr[ifreq].deciLevel = auxFc( ifreq, 0 );
 					station[istn].ts[its].combination[icomb].fr[ifreq].lowerLimitBandWidth = auxFc( ifreq, 1 );
 					station[istn].ts[its].combination[icomb].fr[ifreq].upperLimitBandWidth = auxFc( ifreq, 2 );
+					station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment = auxFc( ifreq, 2 ) - auxFc( ifreq, 1 ) + 1;
 
 					if( auxMeasFreq > station[istn].ts[its].maxFreqInHertz || auxMeasFreq < station[istn].ts[its].minFreqInHertz )
 						idxFreqsToRemove.push_back( ifreq );
@@ -114,16 +393,16 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std:
 					for( int icol = 0; icol < auxFc.getDim(1); icol++ )
 						station[istn].ts[its].combination[icomb].fcDistribution[0]( ifreq, icol ) = auxFc( idxFreqsToAdd[ifreq], icol );
 				
-				// checkouts				
-				station[istn].ts[its].ch[0].systemResponseFreqs[0].print();
-				cout << endl;	
-				auxFc.print();
-				cout << endl;
-				station[istn].ts[its].combination[icomb].fcDistribution[0].print();
-				cout << endl << idxFreqsToRemove.size() << endl << endl;
-				for( int i = 0; i < idxFreqsToRemove.size(); i++ )
-					cout << idxFreqsToRemove[i] << " ";
-				cout << endl << endl;
+				//// checkouts				
+				//station[istn].ts[its].ch[0].systemResponseFreqs[0].print();
+				//cout << endl;	
+				//auxFc.print();
+				//cout << endl;
+				//station[istn].ts[its].combination[icomb].fcDistribution[0].print();
+				//cout << endl << idxFreqsToRemove.size() << endl << endl;
+				//for( int i = 0; i < idxFreqsToRemove.size(); i++ )
+				//	cout << idxFreqsToRemove[i] << " ";
+				//cout << endl << endl;
 
 				// remove frequencies not allowed by system response 
 				for( int ifreq = idxFreqsToRemove.size() - 1; ifreq >= 0; ifreq--) {
@@ -148,15 +427,15 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std:
 					for( int iblock = 0; iblock < station[istn].ts[its].combination[icomb].nBlocks; iblock++ ) {
 						nDeci = station[istn].ts[its].combination[icomb].fr[ifreq].deciLevel;
 						nSeg = (size_t)floor( lngth/pow(this->factorOfEachDecimationLevel,nDeci - 1)/( this->windowLength*( 1 - this->overlap ) ) );
-						nFCsPerSegment = station[istn].ts[its].combination[icomb].fr[ifreq].upperLimitBandWidth - station[istn].ts[its].combination[icomb].fr[ifreq].lowerLimitBandWidth + 1;
+						nFCsPerSegment = station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
 						station[istn].ts[its].combination[icomb].fr[ifreq].elementCounter += nSeg*nFCsPerSegment;
 					}
 
 					nElements = station[istn].ts[its].combination[icomb].fr[ifreq].elementCounter;
-					cout << nElements << endl << endl;
+					//cout << nElements << " " << station[istn].ts[its].combination[icomb].fr[ifreq].frequency << " " << station[istn].ts[its].combination[icomb].fr[ifreq].deciLevel << endl << endl;
 					station[istn].ts[its].combination[icomb].fr[ifreq].in = new matCUDA::Array<ComplexDouble>( nElements, N_CHANNEL_INPUTS );
 					station[istn].ts[its].combination[icomb].fr[ifreq].out = new matCUDA::Array<ComplexDouble>( nElements, station[istn].ts[its].nChannels -  N_CHANNEL_INPUTS );
-					station[istn].ts[its].combination[icomb].fr[ifreq].inRR = new matCUDA::Array<ComplexDouble>( nElements, N_CHANNEL_INPUTS*station[istn].ts[its].combination[icomb].numberOfConcomitantTs );
+					station[istn].ts[its].combination[icomb].fr[ifreq].inRR = new matCUDA::Array<ComplexDouble>( nElements, N_CHANNEL_INPUTS*station[istn].ts[its].combination[icomb].nConcomitantTs );
 				}
 			}
 			station[istn].ts[its].maxDecimationLevel = *std::max_element( station[istn].ts[its].combination[0].deciLevelEachBlock.begin(), station[istn].ts[its].combination[ station[istn].ts[its].combination.size() - 1 ].deciLevelEachBlock.end() );
@@ -166,120 +445,37 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std:
 
 void Extract_FCs_FixedWindowLength::allocate_memory_for_ch_fc( std::vector<StationBase> &station )
 {
+	//cout<< this->nFreq << endl;
 	for( int istn = 0; istn < station.size(); istn++ ) 
 		for( int its = 0; its < station[istn].ts.size(); its++ ) 
-			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) 
+			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
 				station[istn].ts[its].ch[ich].fc = new matCUDA::Array<ComplexDouble>(this->nFreq);
+				station[istn].ts[its].ch[ich].fc[0] = 2;
+			}
 }
 
 void Extract_FCs_FixedWindowLength::deallocate_memory_for_ch_fc( std::vector<StationBase> &station )
 {
 	for( int istn = 0; istn < station.size(); istn++ ) 
 		for( int its = 0; its < station[istn].ts.size(); its++ ) 
-			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) 
-				delete( station[istn].ts[its].ch[ich].fc );
-}
-
-void Extract_FCs_FixedWindowLength::extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination )
-{
-	size_t nSegments;
-	size_t istn = idxStn, its = idxTs, icomb = idxCombination; // index just to help
-	size_t istart = 0, iend = istart + this->windowLength - 1; // index for reading concomitant TSs
-	size_t winPace = floor( this->windowLength*( 1 - this->overlap ) );
-
-	Combination auxComb = station[istn].ts[its].combination[icomb];
-	
-	matCUDA::Array<double> auxReal( this->windowLength );
-	matCUDA::Array<ComplexDouble> auxCmplx( floor(this->windowLength/2) + 1 );
-
-	// sweep through the "blocks" of data - one block is a piecewise continuous set of data
-	for( int iblock = 0; iblock < auxComb.idxBgn[0].getDim(0); iblock++ ) {
-
-		// sweep through the decimation levels of each block
-		for( int ideci = 0; ideci < auxComb.deciLevelEachBlock[iblock]; ideci++ ) {
-
-			nSegments = floor( ( auxComb.idxEnd[0](iblock,0) - auxComb.idxBgn[0](iblock,0) )/( this->windowLength*( 1 - this->overlap ) ) );
-			cout << nSegments << endl;
-
-			// sweep through the segments of each decimation level of each block
-			for( int iseg = 0; iseg < nSegments; iseg++ ) {
-
-				for( int iInvolvedTs = 0; iInvolvedTs < auxComb.numberOfConcomitantTs + 1; iInvolvedTs++ ) {
-					
-					istart = auxComb.idxBgn[0](iblock,iInvolvedTs);
-					iend = istart + this->windowLength - 1;
-
-					size_t iAuxStn = 0, iAuxTs = 0, upperLimit = 0;
-					// transform segments of "this" TS and its concomitants combinations in FC
-					while( iend < auxComb.idxEnd[0](iblock,iInvolvedTs) ) {
-
-						// define which will be treated now
-						if( iInvolvedTs == 0 ) {
-							iAuxStn = istn;
-							iAuxTs = its;
-							upperLimit = station[iAuxStn].ts[iAuxTs].ch.size();
-						}
-						else {
-							iAuxStn = auxComb.idxStn[iInvolvedTs - 1];
-							iAuxTs = auxComb.idxTs[iInvolvedTs - 1];
-							upperLimit = N_CHANNEL_INPUTS;
-						}
-
-						// get FCs for station of interest (this one)
-						for( int ich = 0; upperLimit; ich++ ) {
-							auxReal = station[iAuxStn].ts[iAuxTs].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
-							auxReal = auxReal.detrend();
-							auxReal = auxReal.elementWiseMultiply( this->auxDpss );
-							auxCmplx = fft( &auxReal );
-							this->correct_fcs( &auxCmplx, &station[iAuxStn].ts[iAuxTs].ch[ich].correction[0] );
-							station[iAuxStn].ts[iAuxTs].ch[ich].fc = &auxCmplx;
-						}
-
-						//// TEST IT NOW!!!!
-						//// get FCs for station of interest (this one)
-						//if( iInvolvedTs == 0 ) {
-						//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
-						//		auxReal = station[istn].ts[its].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
-						//		auxReal = auxReal.detrend();
-						//		auxReal = auxReal.elementWiseMultiply( this->auxDpss );
-						//		auxCmplx = fft( &auxReal );
-						//		this->correct_fcs( &auxCmplx, &station[istn].ts[its].ch[ich].correction[0] );
-						//		station[istn].ts[its].ch[ich].fc = &auxCmplx;
-						//	}
-						//}
-						//// get FCs for remote stations
-						//else {
-						//	size_t auxCombStn = auxComb.idxStn[iInvolvedTs - 1];
-						//	size_t auxCombTs = auxComb.idxTs[iInvolvedTs - 1];
-						//	for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) { // TODO - IMPROVE this number"2"
-						//		auxReal = station[auxCombStn].ts[auxCombTs].ch[ich].timeSeries[0].submatrix( istart, iend, 0, 0 );
-						//		auxReal = auxReal.detrend();
-						//		auxReal = auxReal.elementWiseMultiply( this->auxDpss );
-						//		auxCmplx = fft( &auxReal );
-						//		this->correct_fcs( &auxCmplx, &station[auxCombStn].ts[auxCombTs].ch[ich].correction[0] );
-						//		station[auxCombStn].ts[auxCombTs].ch[ich].fc = &auxCmplx;
-						//	}
-						//}
-
-						istart += winPace;
-						iend = istart + this->windowLength - 1;
-					}
-				}
-
-				// get in
-
-				// get inRR
-
-				// get out
+			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
+				station[istn].ts[its].ch[ich].fc[0].print();
+				delete station[istn].ts[its].ch[ich].fc;
 			}
-		}
-	}
 }
 
-void Extract_FCs_FixedWindowLength::correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction )
+void Extract_FCs_FixedWindowLength::correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction, size_t deciLevel )
 {
+	//for( int i = 1990; i < 2000; i++ )
+	//	cout << correction[0]( i, deciLevel ) << endl;
+	//cout<< endl;
+	//cout<< this->nFreq << endl;
+	//correction[0].print();
 	for( int i = 0; i < this->nFreq; i++ )
-		data[0]( i ) = data[0]( i + 1 )*correction[0]( i );
+		data[0]( i ) = data[0]( i + 1 )*correction[0]( deciLevel, i);
+	//for( int i = 500; i < 505; i++ )
+	//	cout << data[0]( i ) << endl;
+	//cout<< endl;
 }
 
 void Extract_FCs_FixedWindowLength::set_corrections( std::vector<StationBase> &station )
@@ -297,7 +493,7 @@ void Extract_FCs_FixedWindowLength::set_corrections( std::vector<StationBase> &s
 		for( int its = 0; its < station[istn].ts.size(); its++ ) {
 
 			// fill in dr with sampling periods for all decimation levels
-			cout << station[istn].ts[its].maxDecimationLevel << endl;
+			//cout << station[istn].ts[its].maxDecimationLevel << endl;
 			std::vector<double> dr( station[istn].ts[its].maxDecimationLevel );
 			for( int i = 0;  i < dr.size(); i++ )
 				dr[i] = pow( this->factorOfEachDecimationLevel, i )/station[istn].ts[its].samplingFrequency;
@@ -305,7 +501,7 @@ void Extract_FCs_FixedWindowLength::set_corrections( std::vector<StationBase> &s
 			// correct for first difference if appropriate
 			// correct unist of fc's
 			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
-				station[istn].ts[its].ch[ich].correction = new Array<ComplexDouble>( station[istn].ts[its].maxDecimationLevel, npts2 );
+				station[istn].ts[its].ch[ich].correction = new matCUDA::Array<ComplexDouble>( station[istn].ts[its].maxDecimationLevel, npts2 );
 				for( int id = 0; id < station[istn].ts[its].maxDecimationLevel; id++ ) {
 					t = sqrt(dr[id]);
 					for( int i = 0; i < npts2; i++ )
@@ -511,7 +707,8 @@ void Extract_FCs_FixedWindowLength::set_parameters()
 
 	this->nArCoeff = static_cast<int>(this->pLRatio*(double)this->windowLength/(1 - this->pLRatio) + 0.5);
 
-	this->auxDpss = new matCUDA::Array<double>( matCUDA::dpss<double>( this->windowLength, 1, 0 ) );
+	this->auxDpss = new matCUDA::Array<double>( matCUDA::read_file_vector<double>( std::string("dpss_4096_1_0.txt") ) );
+	//this->auxDpss = &matCUDA::read_file_vector<double>( std::string("dpss_4096_1_0.txt") );
 	
 	//if( this->isAcquisitionContinuous == false )
 	//	this->nDecimationLevel = 1;
@@ -543,6 +740,7 @@ void Extract_FCs_FixedWindowLength::get_draft_of_fc_distribution()
 	draftOfFcDistribution(11,0) = 8; draftOfFcDistribution(11,1) = 16;
 	draftOfFcDistribution(12,0) = 4; draftOfFcDistribution(12,1) = 8;
 
+	this->nFreq = draftOfFcDistribution(0,1);
 	this->auxFcDistribution = new matCUDA::Array<int>( draftOfFcDistribution.getDim(0), draftOfFcDistribution.getDim(1) );
 	*(this->auxFcDistribution) = draftOfFcDistribution;
 }

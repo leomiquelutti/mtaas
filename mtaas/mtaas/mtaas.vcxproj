@@ -133,9 +133,11 @@
   <ItemGroup>
     <ClInclude Include="DirectoryProperties.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="fc2z.h" />
     <ClInclude Include="GetDeclination.h" />
     <ClInclude Include="MT.h" />
     <ClInclude Include="Mtu.h" />
+    <ClInclude Include="parameters.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ts2fc.h" />
@@ -145,10 +147,12 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="EngineRobust.cpp" />
+    <ClCompile Include="fc2z.cpp" />
     <ClCompile Include="GetDeclination.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MT.cpp" />
     <ClCompile Include="Mtu.cpp" />
+    <ClCompile Include="parameters.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ts2fc.cpp" />
   </ItemGroup>

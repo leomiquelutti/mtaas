@@ -1,9 +1,11 @@
 #include "MT.h"
 #include "Mtu.h"
 #include "ts2fc.h"
+#include "fc2z.h"
 
 class Extract_FCs_FixedWindowLength;
 class Extract_FCs_VariableWindowLength;
+class Evaluate_Z_LS;
 //#include <sstream>
 
 StationBase& StationBase::operator = (const StationBase& element)
@@ -19,36 +21,63 @@ StationBase& StationBase::operator = (const StationBase& element)
 
 StationFile& StationFile::operator = (const StationFile& element)
 {
+	this->combination = element.combination;
+	this->ch = element.ch;
 	this->date = element.date;
 	this->exDipoleLength = element.exDipoleLength;
 	this->eyDipoleLength = element.eyDipoleLength;
+	this->isAcquisitionContinuous = element.isAcquisitionContinuous;
 	this->isContinuous = element.isContinuous;
+	this->isThereRR = element.isThereRR;
+	this->maxDecimationLevel = element.maxDecimationLevel;
+	this->maxFcDist = element.maxFcDist;
 	this->maxFreqInHertz = element.maxFreqInHertz;
 	this->minFreqInHertz = element.minFreqInHertz;
 	this->mtu = element.mtu;
+	this->nChannels = element.nChannels;
+	this->numberOfCombinations = element.numberOfCombinations;
 	this->samplingFrequency = element.samplingFrequency;
 	this->timeVector = element.timeVector;
-	this->ch = element.ch;
-	this->isThereRR = element.isThereRR;
-	this->numberOfCombinations = element.numberOfCombinations;
-	this->isAcquisitionContinuous = element.isAcquisitionContinuous;
-	this->maxDecimationLevel = element.maxDecimationLevel;
 
 	return *this;
 }
 
 Channel& Channel::operator = (const Channel& element)
-{
+{	
 	this->arCoeff = element.arCoeff;
-	this->timeSeries = element.timeSeries;
-	this->systemResponse = element.systemResponse;
-	this->systemResponseFreqs = element.systemResponseFreqs;
+	this->channel_orientation = element.channel_orientation;
+	this->channel_type = element.channel_type;
+	this->correction = element.correction;
 	this->countConversion = element.countConversion;
+	this->dipoleLength = element.dipoleLength;
+	this->fc = element.fc;
+	this->gain = element.gain;
+	this->name = element.name;
 	this->orientationHor = element.orientationHor;
 	this->orientationVer = element.orientationVer;
-	this->name = element.name;
-	this->gain = element.gain;
-	this->fc = element.fc;
+	this->systemResponse = element.systemResponse;
+	this->systemResponseFreqs = element.systemResponseFreqs;
+	this->timeSeries = element.timeSeries;
+
+	return *this;
+}
+
+Combination& Combination::operator = (const Combination& element)
+{	
+	this->deciLevelEachBlock = element.deciLevelEachBlock;
+	this->fcDistribution = element.fcDistribution;
+	this->fr = element.fr;
+	this->idxBgn = element.idxBgn;
+	this->idxEnd = element.idxEnd;
+	this->idxStn = element.idxStn;
+	this->idxTs = element.idxTs;
+	this->lengthTsEachBlock = element.lengthTsEachBlock;
+	this->measuredFrequencies = element.measuredFrequencies;
+	this->nBlocks = element.nBlocks;
+	this->nConcomitantTs = element.nConcomitantTs;
+	this->nDeci = element.nDeci;
+	this->nFreq = element.nFreq;
+	this->samplFreqEachDeciLevel = element.samplFreqEachDeciLevel;
 
 	return *this;
 }
@@ -56,33 +85,16 @@ Channel& Channel::operator = (const Channel& element)
 FrequencyResponses& FrequencyResponses::operator = (const FrequencyResponses& element)
 {
 	this->deciLevel = element.deciLevel;
-	this->lowerLimitBandWidth = element.lowerLimitBandWidth;
-	this->upperLimitBandWidth = element.upperLimitBandWidth;
+	this->elementCounter = element.elementCounter;
 	this->frequency = element.frequency;
 	this->in = element.in;
-	this->out = element.out;
 	this->inRR = element.inRR;
-	this->elementCounter = element.elementCounter;
-
-	return *this;
-}
-
-Combination& Combination::operator = (const Combination& element)
-{
-	this->idxStn = element.idxStn;
-	this->idxTs = element.idxTs;
-	this->idxBgn = element.idxBgn;
-	this->idxEnd = element.idxEnd;
-	this->numberOfConcomitantTs = element.numberOfConcomitantTs;
-	this->measuredFrequencies = element.measuredFrequencies;
-	this->fr = element.fr;
-	this->deciLevelEachBlock = element.deciLevelEachBlock;
-	this->nBlocks = element.nBlocks;
-	this->lengthTsEachBlock = element.lengthTsEachBlock;
-	this->fcDistribution = element.fcDistribution;
-	this->samplFreqEachDeciLevel = element.samplFreqEachDeciLevel;
-	this->nFreq = element.nFreq;
-	this->nDeci = element.nDeci;
+	this->lowerLimitBandWidth = element.lowerLimitBandWidth;
+	this->nFCsPerSegment = element.nFCsPerSegment;
+	this->out = element.out;
+	this->param = element.param;
+	this->transferTensor = element.transferTensor;
+	this->upperLimitBandWidth = element.upperLimitBandWidth;
 
 	return *this;
 }
@@ -139,6 +151,15 @@ void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE
 	}
 }
 
+void StationBase::get_Z( std::vector<StationBase> &station, ESTIMATOR_TYPE estimator_type )
+{
+	switch(estimator_type)
+	{
+	case LEAST_SQUARES:
+		Evaluate_Z_LS::get_Z( station );
+	}
+}
+	
 void Combination::define_combinations_for_rr( std::vector<StationBase> &station )
 {
 }
@@ -157,16 +178,16 @@ void Combination::define_combinations_for_ss( std::vector<StationBase> &station 
 			station[istn].ts[its].combination[0].idxStn.resize(1);
 			station[istn].ts[its].combination[0].idxTs.resize(1);
 
-			station[istn].ts[its].combination[0].numberOfConcomitantTs = 1;
+			station[istn].ts[its].combination[0].nConcomitantTs = 1;
 			station[istn].ts[its].combination[0].nBlocks = 1;
 			station[istn].ts[its].combination[0].idxStn[0] = istn;
 			station[istn].ts[its].combination[0].idxTs[0] = its;
 
-			station[istn].ts[its].combination[0].idxBgn = new Array<int>( 1, auxRRConc.numberOfConcomitantTs + 1 );
+			station[istn].ts[its].combination[0].idxBgn = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
 			station[istn].ts[its].combination[0].idxBgn[0](0,0) = station[istn].ts[its].timeVector[0](0,0);
 			station[istn].ts[its].combination[0].idxBgn[0](0,1) = station[istn].ts[its].timeVector[0](0,0);
 
-			station[istn].ts[its].combination[0].idxEnd = new Array<int>( 1, auxRRConc.numberOfConcomitantTs + 1 );
+			station[istn].ts[its].combination[0].idxEnd = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
 			station[istn].ts[its].combination[0].idxEnd[0](0,0) = station[istn].ts[its].timeVector[0](0,1);
 			station[istn].ts[its].combination[0].idxEnd[0](0,1) = station[istn].ts[its].timeVector[0](0,1);
 		}

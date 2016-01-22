@@ -16,33 +16,37 @@ public:
 	matCUDA::Array<int> *fcDistribution;
 
 	static void get_all_FCs( std::vector<StationBase> &station );
+
 	void set_corrections( std::vector<StationBase> &station );
 	void extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination );
-	void correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction );
-	void initialize_FrequencyResponses();
+	void correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction, size_t deciLevel );
 	void allocate_memory_for_ch_fc( std::vector<StationBase> &station );
 	void deallocate_memory_for_ch_fc( std::vector<StationBase> &station );
 	void allocate_memory_for_FrequencyResponses( std::vector<StationBase> &station );
 
+	//void get_in( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  );
+	//void get_out( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  );
+	//void get_in_out_inRR( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t iStnOut, const size_t iTsOut, const size_t idxSeg  );
+	void get_in_out_inRR( std::vector<StationBase> &station, const size_t istn, const size_t its, const size_t icomb, const size_t iseg  );
+	
 private:
 
 	// members
-	size_t windowLength;
-	size_t fcDraftMadeForWinLengthOf;
-	//size_t nDecimationLevel;
-	size_t factorOfEachDecimationLevel;
-	double overlap;
-	size_t minNumDataPerFreq;
-	double pLRatio;
-	size_t nFreq;
-	size_t nArCoeff;
-	size_t nPointsTS;
-	bool isAcquisitionContinuous;
-	size_t firstsLinesToRepeatFromFcDistribution;
-	matCUDA::Array<int> *auxFcDistribution;
-	matCUDA::Array<double> *auxDpss;
-	size_t dpssNW;
-	size_t dpssDegree;
+	matCUDA::Array<double>	*auxDpss;
+	matCUDA::Array<int>		*auxFcDistribution;
+	size_t					dpssNW;
+	size_t					dpssDegree;
+	size_t					factorOfEachDecimationLevel;
+	size_t					fcDraftMadeForWinLengthOf;
+	size_t					firstsLinesToRepeatFromFcDistribution;
+	bool					isAcquisitionContinuous;
+	size_t 					minNumDataPerFreq;
+	size_t 					nArCoeff;
+	size_t 					nFreq;
+	size_t 					nPointsTS;
+	double 					overlap;
+	double 					pLRatio;
+	size_t 					windowLength;
 
 	// function
 	size_t determine_decimation_level( size_t nPoints );
