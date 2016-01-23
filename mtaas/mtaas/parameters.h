@@ -8,6 +8,8 @@ class Parameters
 {
 public:
 
+	friend class WriteOutputs;
+
 	Parameters( matCUDA::Array<ComplexDouble> transferTensor, size_t nChannels, double frequency );
 	~Parameters();
 

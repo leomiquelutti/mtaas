@@ -211,3 +211,36 @@ void Utils::draft_build_time_vector( std::vector<StationBase> &station )
 		}
 	}
 }
+
+WriteOutputs::WriteOutputs( std::vector<StationBase> &station )
+{
+	for( int istn = 0; istn < station.size(); istn++ )
+		for( int its = 0; its < station[istn].ts.size(); its++ )
+			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
+
+				size_t size = station[istn].ts[its].combination[icomb].fr.size();
+				matCUDA::Array<double> freq( size );
+				matCUDA::Array<double> rhoapp( size, 4 );
+				matCUDA::Array<double> phase( size, 4 );
+
+				for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) {
+					freq( ifreq ) = station[istn].ts[its].combination[icomb].fr[ifreq].frequency;
+
+					rhoapp( ifreq, 0 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->apparentResistivity( 0, 0 );
+					rhoapp( ifreq, 1 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->apparentResistivity( 1, 0 );
+					rhoapp( ifreq, 2 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->apparentResistivity( 0, 1 );
+					rhoapp( ifreq, 3 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->apparentResistivity( 1, 1 );
+
+					phase( ifreq, 0 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->phase( 0, 0 );
+					phase( ifreq, 1 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->phase( 1, 0 );
+					phase( ifreq, 2 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->phase( 0, 1 );
+					phase( ifreq, 3 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->phase( 1, 1 );
+				}
+
+				this->write_to_file( freq, rhoapp, phase );
+			}
+}
+
+void WriteOutputs::write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase )
+{
+}

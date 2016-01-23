@@ -19,8 +19,8 @@ Parameters::Parameters( matCUDA::Array<ComplexDouble> transferTensor, size_t nCh
 	this->evaluate_rhoapp();
 	this->evaluate_phase();
 
-	this->apparentResistivity.print();
-	this->phase.print();
+	//this->apparentResistivity.print();
+	//this->phase.print();
 }
 
 void Parameters::evaluate_rhoapp()

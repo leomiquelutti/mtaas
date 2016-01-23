@@ -79,6 +79,8 @@ int main()
 	//	std::cout << std::endl;
 	//}
 
+	WriteOutputs::WriteOutputs( station );
+
 
 
 	// delete everything allocated

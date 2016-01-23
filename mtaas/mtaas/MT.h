@@ -113,6 +113,15 @@ private:
 	double declinationInput;
 };
 
+class WriteOutputs
+{
+public:
+
+	WriteOutputs( std::vector<StationBase> &station );
+
+	void write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase );
+};
+
 // class containing info from each Channel within each TS
 class FrequencyResponses
 {
@@ -168,8 +177,6 @@ public:
 
 	static void define_combinations_for_rr( std::vector<StationBase> &station );
 	static void define_combinations_for_ss( std::vector<StationBase> &station );
-
-	void write_parameters_to_file();
 };
 
 // class containing info from each Channel within each TS

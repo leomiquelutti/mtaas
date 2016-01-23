@@ -42,9 +42,22 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 		for( int its = 0; its < station[istn].ts.size(); its++ )
 			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
 				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
-			}
+				
 
-	station[0].ts[0].ch[0].fc[0].print();
+				//// checkouts
+				//for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) 
+				//for( int i = 500; i < 505; i++ ) {	
+				//	// in
+				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( i, 1 ) << " ";
+				//	// inRR
+				//	
+				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( i, 1 ) << " ";
+				//	// out
+				//	
+				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 1 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 2 ) << endl;
+				//	cout << endl << endl;
+				//}
+			}
 
 	// free memory
 	fc.deallocate_memory_for_ch_fc( station );
@@ -119,6 +132,29 @@ void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &s
 	size_t lowerLimit = 0, upperLimit = 0;
 	size_t istn2 = 0, its2 = 0, idxInRR = 0;
 
+	//// checkouts
+	//for( int i = 500; i < 505; i++ ) {
+	//
+	//	// in
+	//	for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ )
+	//		cout << station[istn].ts[its].ch[ich].fc[0]( i ) << " ";
+	//
+	//	// out
+	//	for( int ich = N_CHANNEL_INPUTS; ich < station[istn].ts[its].ch.size(); ich++ )
+	//		cout << station[istn].ts[its].ch[ich].fc[0]( i ) << " ";		
+	//	
+	//	// inRR
+	//	//cout << station[istn].ts[its].combination[icomb].nConcomitantTs << endl;
+	//	for( int iaux = 0; iaux < station[istn].ts[its].combination[icomb].nConcomitantTs; iaux++ ) {
+	//
+	//		istn2 = station[istn].ts[its].combination[icomb].idxStn[iaux];
+	//		its2 = station[istn].ts[its].combination[icomb].idxTs[iaux];
+	//		
+	//		for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ )
+	//			cout << station[istn2].ts[its2].ch[ich].fc[0]( i ) << " ";
+	//	}
+	//	cout << endl << endl;
+	//}
 
 	for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) {
 		
@@ -129,9 +165,9 @@ void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &s
 		// in
 		for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
 
-			for( int i = 500; i < 505; i++ )
-				cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
-			cout << endl;
+			//for( int i = 500; i < 505; i++ )
+			//	cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
+			//cout << endl;
 			//station[istn].ts[its].ch[ich].fc[0].print();
 			idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
 			for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
@@ -141,9 +177,9 @@ void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &s
 		//out
 		for( int ich = N_CHANNEL_INPUTS; ich < station[istn].ts[its].ch.size(); ich++ ) {
 
-			for( int i = 500; i < 505; i++ )
-				cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
-			cout << endl;
+			//for( int i = 500; i < 505; i++ )
+			//	cout << station[istn].ts[its].ch[ich].fc[0]( i ) << endl;
+			//cout << endl;
 			//station[istn].ts[its].ch[ich].fc[0].print();
 			idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
 			for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
@@ -182,9 +218,9 @@ void Extract_FCs_FixedWindowLength::get_in_out_inRR( std::vector<StationBase> &s
 			
 			for( int ich = 0; ich < N_CHANNEL_INPUTS; ich++ ) {
 
-				for( int i = 500; i < 505; i++ )
-					cout << station[istn2].ts[its2].ch[ich].fc[0]( i ) << endl;
-				cout << endl;
+				//for( int i = 500; i < 505; i++ )
+				//	cout << station[istn2].ts[its2].ch[ich].fc[0]( i ) << endl;
+				//cout << endl;
 				//station[istn2].ts[its2].ch[ich].fc[0].print();
 				idx = iseg*station[istn].ts[its].combination[icomb].fr[ifreq].nFCsPerSegment;
 				for( int ifc = lowerLimit; ifc < upperLimit; ifc++ )
@@ -319,15 +355,15 @@ void Extract_FCs_FixedWindowLength::extract_fcs_for_each_combination( std::vecto
 
 						//station[iAuxStn].ts[iAuxTs].ch[ich].fc[0].print();
 						
-						for( int i = imin; i < imax; i++ )
-							cout << station[iAuxStn].ts[iAuxTs].ch[ich].fc[0]( i ) << " " << auxCmplx(i) << endl;
-						cout<< endl;
+						//for( int i = imin; i < imax; i++ )
+						//	cout << station[iAuxStn].ts[iAuxTs].ch[ich].fc[0]( i ) << " " << auxCmplx(i) << endl;
+						//cout<< endl;
 					}
 				}
-				cout << iseg << endl << endl;
+				//cout << iseg << endl << endl;
 				this->get_in_out_inRR( station, istn, its, icomb, idx++ );
 			}
-	station[0].ts[0].ch[0].fc[0].print();
+	//station[0].ts[0].ch[0].fc[0].print();
 		}
 	}
 }
@@ -448,20 +484,16 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_ch_fc( std::vector<Stati
 	//cout<< this->nFreq << endl;
 	for( int istn = 0; istn < station.size(); istn++ ) 
 		for( int its = 0; its < station[istn].ts.size(); its++ ) 
-			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
+			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
 				station[istn].ts[its].ch[ich].fc = new matCUDA::Array<ComplexDouble>(this->nFreq);
-				station[istn].ts[its].ch[ich].fc[0] = 2;
-			}
 }
 
 void Extract_FCs_FixedWindowLength::deallocate_memory_for_ch_fc( std::vector<StationBase> &station )
 {
 	for( int istn = 0; istn < station.size(); istn++ ) 
 		for( int its = 0; its < station[istn].ts.size(); its++ ) 
-			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ ) {
-				station[istn].ts[its].ch[ich].fc[0].print();
+			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )
 				delete station[istn].ts[its].ch[ich].fc;
-			}
 }
 
 void Extract_FCs_FixedWindowLength::correct_fcs( matCUDA::Array<ComplexDouble> *data, matCUDA::Array<ComplexDouble> *correction, size_t deciLevel )
