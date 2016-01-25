@@ -119,7 +119,7 @@ public:
 
 	WriteOutputs( std::vector<StationBase> &station );
 
-	void write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase );
+	void write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase, std::string filename );
 };
 
 // class containing info from each Channel within each TS

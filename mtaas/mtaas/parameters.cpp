@@ -48,18 +48,18 @@ void Parameters::evaluate_phase()
 void Parameters::initialize_Z_only( matCUDA::Array<ComplexDouble> transferTensor )
 {
 	// impedance tensor
-	this->impedanceTensor = transferTensor;
+	this->impedanceTensor = transferTensor.transpose();
 }
 
 void Parameters::initialize_Z_and_tipper( matCUDA::Array<ComplexDouble> transferTensor )
 {
 	// impedance tensor
-	this->impedanceTensor( 0, 0 ) = transferTensor( 1, 0 );
-	this->impedanceTensor( 0, 1 ) = transferTensor( 1, 1 );
-	this->impedanceTensor( 1, 0 ) = transferTensor( 2, 0 );
-	this->impedanceTensor( 1, 1 ) = transferTensor( 2, 1 );
+	this->impedanceTensor( 0, 0 ) = transferTensor( 0, 1 ); //Zxx
+	this->impedanceTensor( 0, 1 ) = transferTensor( 1, 1 ); //Zxy
+	this->impedanceTensor( 1, 0 ) = transferTensor( 0, 2 ); //Zyx
+	this->impedanceTensor( 1, 1 ) = transferTensor( 1, 2 ); //Zyy
 
 	// tipper
-	this->tipper( 0, 0 ) = transferTensor( 0, 0 );
-	this->tipper( 0, 1 ) = transferTensor( 0, 1 );
+	this->tipper( 0, 0 ) = transferTensor( 0, 0 ); // Tx
+	this->tipper( 0, 1 ) = transferTensor( 1, 0 ); // Ty
 }

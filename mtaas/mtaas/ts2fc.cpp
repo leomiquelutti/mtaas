@@ -41,6 +41,7 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 	for( int istn = 0; istn < station.size(); istn++ )
 		for( int its = 0; its < station[istn].ts.size(); its++ )
 			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
+				// cout << istn << " " << its << " " << icomb << endl;
 				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
 				
 
@@ -445,7 +446,7 @@ void Extract_FCs_FixedWindowLength::allocate_memory_for_FrequencyResponses( std:
 					station[istn].ts[its].combination[icomb].measuredFrequencies.erase( station[istn].ts[its].combination[icomb].measuredFrequencies.begin() + idxFreqsToRemove[ifreq] );
 					station[istn].ts[its].combination[icomb].fr.erase( station[istn].ts[its].combination[icomb].fr.begin() + idxFreqsToRemove[ifreq] );
 				}
-				
+
 				// set new maximum decimation level
 				nDeciMax = station[istn].ts[its].combination[icomb].fcDistribution[0]( station[istn].ts[its].combination[icomb].fcDistribution[0].getDim(0) - 1, 0 );
 

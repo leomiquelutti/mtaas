@@ -3,6 +3,9 @@
 #include "ts2fc.h"
 #include "fc2z.h"
 
+#include <iostream>
+#include <fstream>
+
 class Extract_FCs_FixedWindowLength;
 class Extract_FCs_VariableWindowLength;
 class Evaluate_Z_LS;
@@ -224,6 +227,9 @@ WriteOutputs::WriteOutputs( std::vector<StationBase> &station )
 				matCUDA::Array<double> phase( size, 4 );
 
 				for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) {
+
+					cout << istn << " " << its << " " << icomb << " " << ifreq << " " << station[istn].ts[its].combination[icomb].fr[ifreq].frequency << endl;
+
 					freq( ifreq ) = station[istn].ts[its].combination[icomb].fr[ifreq].frequency;
 
 					rhoapp( ifreq, 0 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->apparentResistivity( 0, 0 );
@@ -237,10 +243,33 @@ WriteOutputs::WriteOutputs( std::vector<StationBase> &station )
 					phase( ifreq, 3 ) = station[istn].ts[its].combination[icomb].fr[ifreq].param->phase( 1, 1 );
 				}
 
-				this->write_to_file( freq, rhoapp, phase );
+				//std::string filename = station[istn].path + "\\" + station[istn].stationName + "_" + std::to_string((int)station[istn].ts[its].samplingFrequency) + ".txt";
+				std::string filename = station[istn].path + "\\" + station[istn].stationName + "\\" + station[istn].stationName + "_" + std::to_string((int)station[istn].ts[its].samplingFrequency) + ".txt";
+				cout << filename << endl;
+				this->write_to_file( freq, rhoapp, phase, filename );
 			}
 }
 
-void WriteOutputs::write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase )
+void WriteOutputs::write_to_file( matCUDA::Array<double> freq, matCUDA::Array<double> rhoapp, matCUDA::Array<double> phase, std::string filename )
 {
+	std::ofstream file;
+	file.open( filename );
+
+	file << "frequency(Hz)\t";
+	file << "rhoXX\t" << "rhoXY\t" << "rhoYX\t" << "rhoYY\t";
+	file << "phsXX\t" << "phsXY\t" << "phsYX\t" << "phsYY" << std::endl;
+
+	for( int i = 0; i < freq.getDim(0); i++ ) {
+
+		file << freq( i, 0 ) <<  "\t"; // BUG
+
+		for( int j = 0; j < rhoapp.getDim(1); j++ )
+			file << rhoapp( i, j ) <<  "\t";
+
+		for( int j = 0; j < rhoapp.getDim(1); j++ )
+			file << phase( i, j ) <<  "\t";
+		file << std::endl;
+	}
+
+	file.close();
 }
