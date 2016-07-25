@@ -55,54 +55,56 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 	}
 }
 
-StationFile ExtractorMTU::get_parameters( StationFile auxTs )
+StationFile ExtractorMTU::get_parameters( StationFile ts )
 {
 	// read tbl an stores result in table tbl file
-	auxTs.mtu.tbl = auxTs.mtu.read_tbl();
+	ts.mtu.tbl = ts.mtu.read_tbl();
 
-	// put important parameters on auxTs to be returned
-	auxTs.exDipoleLength = auxTs.mtu.tbl.exln;
-	auxTs.eyDipoleLength = auxTs.mtu.tbl.eyln;
+	// put important parameters on ts to be returned
+	ts.exDipoleLength = ts.mtu.tbl.exln;
+	ts.eyDipoleLength = ts.mtu.tbl.eyln;
 
-	// read TSn first tag - filling of auxTs inside function
+	// read TSn first tag - filling of ts inside function
 	ifstream infile( this->tsnFile, ios::binary );
 	if ( infile.good() ) {
-		read_TSn_tag( infile, &auxTs, 0 );
+		read_TSn_first_tag( infile, &ts, 0 );
 		infile.close();
     }
 	
-	return auxTs;
+	return ts;
 }
 
-void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
+void ExtractorMTU::read_mtu_data( StationFile &ts  )
 {
-	std::string input = auxTs.mtu.tsnFile;
+	std::string input = ts.mtu.tsnFile;
+
+	StationFile auxTs;
 
 	ifstream infile( input, ios::binary );
 	if ( infile.good() )
     {
-		read_TSn_tag( infile, &auxTs, 0 );
+		read_TSn_tag( infile, &ts, 0 );
 		infile.close();
     }
 	
-	auxTs.mtu.numberOfBytes = get_number_of_bytes( input );
-	auxTs.mtu.numberOfRecords = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength;
-	auxTs.mtu.numberOfSamples = auxTs.mtu.numberOfBytes / auxTs.mtu.recordLength * auxTs.mtu.nScansPerRecord;
+	ts.mtu.numberOfBytes = get_number_of_bytes( input );
+	ts.mtu.numberOfRecords = ts.mtu.numberOfBytes / ts.mtu.recordLength;
+	ts.mtu.numberOfSamples = ts.mtu.numberOfBytes / ts.mtu.recordLength * ts.mtu.nScansPerRecord;
 
 	// allocate time-series memory
-	std::vector<Channel> auxCh(auxTs.nChannels);
+	std::vector<Channel> auxCh(ts.nChannels);
 	for( int i = 0; i < auxCh.size(); i++ )
-		auxCh[i].timeSeries = new Array<double>((size_t)auxTs.mtu.numberOfSamples);
+		auxCh[i].timeSeries = new Array<double>((size_t)ts.mtu.numberOfSamples);
 
 	// fill in correction vectors
 	this->read_cts_file( auxCh );
 
 	// fill in maximun and minimum allowed frequencies
-	auxTs.maxFreqInHertz = (auxCh[0].systemResponseFreqs[0].max())(0,0);
-	auxTs.minFreqInHertz = (auxCh[0].systemResponseFreqs[0].min())(0,0);
+	ts.maxFreqInHertz = (auxCh[0].systemResponseFreqs[0].max())(0,0);
+	ts.minFreqInHertz = (auxCh[0].systemResponseFreqs[0].min())(0,0);
 	
 	// get mtu raw data
-	*this = auxTs.mtu;
+	*this = ts.mtu;
 	if( infile.good() )
 	{
 		cout << "Reading time series data from " << input << endl << endl;
@@ -115,7 +117,56 @@ void ExtractorMTU::read_mtu_data( StationFile &auxTs  )
 	// finishes filling channel details, as gain, orientation, count conversion, etc
 	this->finish_channel_details( auxCh );
 
-	auxTs.ch = auxCh;
+	ts.ch = auxCh;
+}
+
+void ExtractorMTU::read_TSn_first_tag( ifstream &infile, StationFile *ts, size_t position )
+{
+	unsigned char *CurrentTag = new unsigned char[this->tagsize];
+	double sampledenom, sampleenum;
+	char sampleunit;
+
+	if( infile.is_open() == true )
+	{
+		infile.seekg ( position );
+		infile.read((char *) CurrentTag, 32);
+		ts->date.startSecond = int( CurrentTag[0] );
+		ts->date.startMinute = int( CurrentTag[1] );
+		ts->date.startHour  = int( CurrentTag[2] );
+		ts->date.startDay = int( CurrentTag[3] );
+		ts->date.startMonth = int( CurrentTag[4] );
+		ts->date.startYear = int( CurrentTag[5] );
+		ts->date.startYear = (2000 + ts->date.startYear)*( ts->date.startYear < 70 ) + ( 1900 + ts->date.startYear)*( ts->date.startYear >= 70 );
+		ts->mtu.nScansPerRecord = int( CurrentTag[11] * 256 + CurrentTag[10] );
+		ts->nChannels = int( CurrentTag[12] );
+		ts->mtu.tagLength = int( CurrentTag[13] );
+		if( ts->mtu.tagLength != ts->mtu.tagsize )
+			cout << "tagsize != taglength = " << ts->mtu.tagLength << "\n" << 
+			"Change tagsize em mtu.h to " << ts->mtu.tagLength << "\n";
+		ts->mtu.sampleLength = int( CurrentTag[17] );
+		sampledenom = double( CurrentTag[19] * 256
+			+ CurrentTag[18] );
+		sampleunit = CurrentTag[20];
+		sampleenum;
+		switch (sampleunit)
+		{
+		case 0:
+			sampleenum = 1.0;
+			break;
+		case 1:
+			sampleenum = 60.0;
+			break;
+		case 2:
+			sampleenum = 3600.0;
+			break;
+		case 3:
+			sampleenum = 3600.0 * 24.0;
+			break;
+		}
+		ts->samplingFrequency = (size_t)(sampledenom / sampleenum);
+		ts->mtu.recordLength = (int)(ts->mtu.nScansPerRecord * ts->nChannels * ts->mtu.sampleLength + ts->mtu.tagLength);
+	}
+    delete[] CurrentTag;
 }
 
 void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -178,7 +229,7 @@ int ExtractorMTU::get_number_of_bytes( string infile )
   return end - begin;
 }
 
-void ExtractorMTU::get_data( std::vector<Channel> &auxCh )
+void ExtractorMTU::get_data( std::vector<Channel> &ch )
 {
 	ifstream infile( this->tsnFile.c_str(), ios::binary );
 	if ( infile.good() )
@@ -187,13 +238,13 @@ void ExtractorMTU::get_data( std::vector<Channel> &auxCh )
 		//cout << this->numberOfRecords << endl;
 		while (infile.good() && counter < this->numberOfRecords )
 		{
-			read_TSn_time_series( infile, auxCh, counter );
+			read_TSn_time_series( infile, ch, counter );
 			counter++;
 		}
     }
 }
 
-void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &auxCh, size_t counter )
+void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Channel> &ch, size_t counter )
 {
 	unsigned char *CurrentTag = new unsigned char[this->tagsize];
 	char *buffer, *currentbyte;
@@ -206,44 +257,44 @@ void ExtractorMTU::read_TSn_time_series( std::ifstream &infile, std::vector<Chan
 
 	// TODO - IMPROVE!
 
-	if( auxCh.size() == 5 ) {
+	if( ch.size() == 5 ) {
 		for (int i = 0; i < this->nScansPerRecord; i++ ) {
 			line = i + counter*this->nScansPerRecord;
-			auxCh[3].timeSeries[0](line) = read_value( currentbyte );
+			ch[3].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[4].timeSeries[0](line) = read_value( currentbyte );
+			ch[4].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			ch[0].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			ch[1].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			ch[2].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
 		}
 	}
 	// for nChannels = 4 - no Hz
-	else if( auxCh.size() == 4 ) {
+	else if( ch.size() == 4 ) {
 		for (int i = 0; i < this->nScansPerRecord; i++ ) {
 			line = i + counter*this->nScansPerRecord;
-			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			ch[2].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[3].timeSeries[0](line) = read_value( currentbyte );
+			ch[3].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			ch[0].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			ch[1].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
 		}
 	}
 	// for nChannels = 3 - just Hz
-	else if( auxCh.size() == 4 ) {
+	else if( ch.size() == 4 ) {
 		for (int i = 0; i < this->nScansPerRecord; i++ ) {
 			line = i + counter*this->nScansPerRecord;
-			auxCh[2].timeSeries[0](line) = read_value( currentbyte );
+			ch[2].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[0].timeSeries[0](line) = read_value( currentbyte );
+			ch[0].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
-			auxCh[1].timeSeries[0](line) = read_value( currentbyte );
+			ch[1].timeSeries[0](line) = read_value( currentbyte );
 			currentbyte += this->sampleLength;
 		}
 	}
@@ -740,7 +791,7 @@ double ExtractorMTU::conv_lon(const char* LNGG) {
     return signal*(deg+min/60.);
 }
 
-void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
+void ExtractorMTU::read_cts_file( std::vector<Channel> &ch )
 {
 	std::string ctsFileName = this->ctsFile;
 
@@ -781,9 +832,9 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 	in.close();
 
 	// allocate memory for each channel's systemResponse vector
-	for( int i = 0; i < auxCh.size(); i++ ) {
-		auxCh[i].systemResponse = new Array<ComplexDouble>( numberOfPoints );
-		auxCh[i].systemResponseFreqs = new Array<double>( numberOfPoints );
+	for( int i = 0; i < ch.size(); i++ ) {
+		ch[i].systemResponse = new Array<ComplexDouble>( numberOfPoints );
+		ch[i].systemResponseFreqs = new Array<double>( numberOfPoints );
 	}
 
 	in.open(ctsFileName);
@@ -818,9 +869,9 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 				
 				idx++;
 				auxFreqUpdate = freq;
-				if( idx >= auxCh[auxI].systemResponseFreqs[0].getDim(0) )
+				if( idx >= ch[auxI].systemResponseFreqs[0].getDim(0) )
 					break;
-				for( int i = 0; i < auxCh.size(); i++ ) {
+				for( int i = 0; i < ch.size(); i++ ) {
 					if (istr.peek() == ',')
 						istr.ignore();
 					istr >> real;
@@ -828,8 +879,8 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 						istr.ignore();
 					istr >> imag;
 					auxI = 3*(i==0) + 4*(i==1) + 1*(i==3) + 2*(i==4);
-					auxCh[auxI].systemResponse[0]( idx ) = Complex( real, imag );
-					auxCh[auxI].systemResponseFreqs[0]( idx ) = freq;
+					ch[auxI].systemResponse[0]( idx ) = Complex( real, imag );
+					ch[auxI].systemResponseFreqs[0]( idx ) = freq;
 				}
 			}
 		}
@@ -837,21 +888,21 @@ void ExtractorMTU::read_cts_file( std::vector<Channel> &auxCh )
 	}
 }
 
-void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
+void ExtractorMTU::finish_channel_details( std::vector<Channel> &ch  )
 {
-	auxCh[0].name = "hx";
-	auxCh[1].name = "hy";
-	if( auxCh.size() == 5 ) {
-		auxCh[2].name = "hz";
-		auxCh[3].name = "ex";
-		auxCh[4].name = "ey";
+	ch[0].name = "hx";
+	ch[1].name = "hy";
+	if( ch.size() == 5 ) {
+		ch[2].name = "hz";
+		ch[3].name = "ex";
+		ch[4].name = "ey";
 	}
-	else if( auxCh.size() == 4 ) {
-		auxCh[2].name = "ex";
-		auxCh[3].name = "ey";
+	else if( ch.size() == 4 ) {
+		ch[2].name = "ex";
+		ch[3].name = "ey";
 	}
-	else if( auxCh.size() == 3 ) {
-		auxCh[2].name = "hz";
+	else if( ch.size() == 3 ) {
+		ch[2].name = "hz";
 	}
 	else {
 		std::cout << "number of channels different than 3, 4 or 5. terminating the program" << std::endl;
@@ -859,72 +910,72 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &auxCh  )
 	}
 
 	// fill in others info
-	for( int i = 0; i < auxCh.size(); i++ ) {
+	for( int i = 0; i < ch.size(); i++ ) {
 
 		// define channel type
-		if( auxCh[i].name.substr( 0, 1 ).compare( "h" ) == 0 || auxCh[i].name.substr( 0, 1 ).compare( "H" ) == 0 )
-			auxCh[i].channel_type = CHANNEL_TYPE_H;
-		else if( auxCh[i].name.substr( 0, 1 ).compare( "e" ) == 0 || auxCh[i].name.substr( 0, 1 ).compare( "E" ) == 0 )
-			auxCh[i].channel_type = CHANNEL_TYPE_E;	
+		if( ch[i].name.substr( 0, 1 ).compare( "h" ) == 0 || ch[i].name.substr( 0, 1 ).compare( "H" ) == 0 )
+			ch[i].channel_type = CHANNEL_TYPE_H;
+		else if( ch[i].name.substr( 0, 1 ).compare( "e" ) == 0 || ch[i].name.substr( 0, 1 ).compare( "E" ) == 0 )
+			ch[i].channel_type = CHANNEL_TYPE_E;	
 		else {
 			std::cout << "first letter of channel name differenting than E(e) or H(h). terminating the program" << std::endl;
 			exit(80);
 		}
 
 		// define channel orientation
-		if( auxCh[i].name.substr( 1, 1 ).compare( "x" ) || auxCh[i].name.substr( 1, 1 ).compare( "X" ) )
-			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_X;
-		else if( auxCh[i].name.substr( 1, 1 ).compare( "y" ) || auxCh[i].name.substr( 1, 1 ).compare( "Y" ) )
-			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_Y;
-		else if( auxCh[i].name.substr( 1, 1 ).compare( "z" ) || auxCh[i].name.substr( 1, 1 ).compare( "Z" ) )
-			auxCh[i].channel_orientation = CHANNEL_ORIENTATION_Z;		
+		if( ch[i].name.substr( 1, 1 ).compare( "x" ) || ch[i].name.substr( 1, 1 ).compare( "X" ) )
+			ch[i].channel_orientation = CHANNEL_ORIENTATION_X;
+		else if( ch[i].name.substr( 1, 1 ).compare( "y" ) || ch[i].name.substr( 1, 1 ).compare( "Y" ) )
+			ch[i].channel_orientation = CHANNEL_ORIENTATION_Y;
+		else if( ch[i].name.substr( 1, 1 ).compare( "z" ) || ch[i].name.substr( 1, 1 ).compare( "Z" ) )
+			ch[i].channel_orientation = CHANNEL_ORIENTATION_Z;		
 		else {
 			std::cout << "seccond letter of channel name differenting than X(x), Y(y) or Z(z). terminating the program" << std::endl;
 			exit(80);
 		}
 
 		// magnetic
-		if( auxCh[i].channel_type == CHANNEL_TYPE_H ) {
+		if( ch[i].channel_type == CHANNEL_TYPE_H ) {
 
 			// x
-			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
-				auxCh[i].orientationHor = this->tbl.hazm; // azimuth related to true north
-				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			if( ch[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				ch[i].orientationHor = this->tbl.hazm; // azimuth related to true north
+				ch[i].orientationVer = 0; // assumed to be on the plane
 			}
 
 			// y
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
-				auxCh[i].orientationHor = this->tbl.hazm + 90; // azimuth related to true north
-				auxCh[i].orientationVer = 0; // assumed to be on the plane
+			else if( ch[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				ch[i].orientationHor = this->tbl.hazm + 90; // azimuth related to true north
+				ch[i].orientationVer = 0; // assumed to be on the plane
 			}
 
 			// z
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Z ) {
-				auxCh[i].orientationHor = 0; // azimuth related to true north
-				auxCh[i].orientationVer = 90; // assumed to be directed to earth's center
+			else if( ch[i].channel_orientation == CHANNEL_ORIENTATION_Z ) {
+				ch[i].orientationHor = 0; // azimuth related to true north
+				ch[i].orientationVer = 90; // assumed to be directed to earth's center
 			}
 
-			auxCh[i].gain = this->tbl.hgn;
-			auxCh[i].countConversion = (double)(this->HCV/this->FS);			
+			ch[i].gain = this->tbl.hgn;
+			ch[i].countConversion = (double)(this->HCV/this->FS);			
 		}
 
 		// electric
-		else if( auxCh[i].channel_type == CHANNEL_TYPE_E ) {
+		else if( ch[i].channel_type == CHANNEL_TYPE_E ) {
 
 			// x
-			if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
-				auxCh[i].dipoleLength = this->tbl.exln/1000; // dipole length in km
-				auxCh[i].orientationHor = this->tbl.eazm; // azimuth related to true north
+			if( ch[i].channel_orientation == CHANNEL_ORIENTATION_X ) {
+				ch[i].dipoleLength = this->tbl.exln/1000; // dipole length in km
+				ch[i].orientationHor = this->tbl.eazm; // azimuth related to true north
 			}
 
 			// y
-			else if( auxCh[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
-				auxCh[i].dipoleLength = this->tbl.eyln/1000; // dipole length in km
-				auxCh[i].orientationHor = this->tbl.eazm + 90; // azimuth related to true north
+			else if( ch[i].channel_orientation == CHANNEL_ORIENTATION_Y ) {
+				ch[i].dipoleLength = this->tbl.eyln/1000; // dipole length in km
+				ch[i].orientationHor = this->tbl.eazm + 90; // azimuth related to true north
 			}
 			
-			auxCh[i].gain = this->tbl.egn;
-			auxCh[i].countConversion = (double)(this->ECV/this->FS/auxCh[i].dipoleLength);
+			ch[i].gain = this->tbl.egn;
+			ch[i].countConversion = (double)(this->ECV/this->FS/ch[i].dipoleLength);
 		}
 	}
 }

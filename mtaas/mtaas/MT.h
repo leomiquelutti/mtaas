@@ -247,6 +247,7 @@ public:
 	size_t						numberOfCombinations;
 	double						samplingFrequency;
 	matCUDA::Array<int>			*timeVector;
+	std::vector<boost::posix_time::ptime>	pTimeVector;
 
 	// functions
 	bool			is_acquisition_continuos( Array<double> *timeVector );

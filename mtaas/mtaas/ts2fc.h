@@ -6,16 +6,18 @@
 class Extract_FCs_FixedWindowLength {
 public:
 
-	Extract_FCs_FixedWindowLength( int winLngth = 4096 );
+	Extract_FCs_FixedWindowLength( std::vector<StationBase> &station, int winLngth = 4096 );
 
 	~Extract_FCs_FixedWindowLength() {};	
 
 	Extract_FCs_FixedWindowLength(const Extract_FCs_FixedWindowLength& element) {*this = element;};
     Extract_FCs_FixedWindowLength& operator = (const Extract_FCs_FixedWindowLength& element);
 
+private:
+
 	matCUDA::Array<int> *fcDistribution;
 
-	static void get_all_FCs( std::vector<StationBase> &station );
+	void get_all_FCs( std::vector<StationBase> &station );
 
 	void set_corrections( std::vector<StationBase> &station );
 	void extract_fcs_for_each_combination( std::vector<StationBase> &station, const size_t idxStn, const size_t idxTs, const size_t idxCombination );
@@ -29,7 +31,7 @@ public:
 	//void get_in_out_inRR( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t iStnOut, const size_t iTsOut, const size_t idxSeg  );
 	void get_in_out_inRR( std::vector<StationBase> &station, const size_t istn, const size_t its, const size_t icomb, const size_t iseg  );
 	
-private:
+//private:
 
 	// members
 	matCUDA::Array<double>	*auxDpss;

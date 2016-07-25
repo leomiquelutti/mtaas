@@ -5,7 +5,7 @@
 //#include <cmath>
 
 // constructor
-Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( int winLngth ) :
+Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( std::vector<StationBase> &station, int winLngth ) :
 		factorOfEachDecimationLevel(4),
 		overlap(0.25),
 		minNumDataPerFreq(20),
@@ -17,17 +17,16 @@ Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( int winLngth ) :
 {
 	windowLength = winLngth;
 	this->set_parameters();
+	this->get_all_FCs( station );
 }
 
 void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &station )
 {
-	Extract_FCs_FixedWindowLength fc;
-
 	// allocate memory for ch[ich].fc
-	fc.allocate_memory_for_ch_fc( station );
+	this->allocate_memory_for_ch_fc( station );
 
 	// allocate memory for in, inRR and out for each FrequencyResponse
-	fc.allocate_memory_for_FrequencyResponses( station );
+	this->allocate_memory_for_FrequencyResponses( station );
 
 	//// checkouts
 	//for( int istn = 0; istn < station.size(); istn++ )
@@ -35,14 +34,14 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 	//		station[istn].ts[its].combination[0].fcDistribution[0].print();
 
 	// set corrections to be used
-	fc.set_corrections( station );
+	this->set_corrections( station );
 
 	// DO IT - retrieve FCs
 	for( int istn = 0; istn < station.size(); istn++ )
 		for( int its = 0; its < station[istn].ts.size(); its++ )
 			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
 				// cout << istn << " " << its << " " << icomb << endl;
-				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
+				this->extract_fcs_for_each_combination( station, istn, its, icomb );
 				
 
 				//// checkouts
@@ -61,8 +60,53 @@ void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &stati
 			}
 
 	// free memory
-	fc.deallocate_memory_for_ch_fc( station );
+	this->deallocate_memory_for_ch_fc( station );
 }
+
+//void Extract_FCs_FixedWindowLength::get_all_FCs( std::vector<StationBase> &station )
+//{
+//	Extract_FCs_FixedWindowLength fc;
+//
+//	// allocate memory for ch[ich].fc
+//	fc.allocate_memory_for_ch_fc( station );
+//
+//	// allocate memory for in, inRR and out for each FrequencyResponse
+//	fc.allocate_memory_for_FrequencyResponses( station );
+//
+//	//// checkouts
+//	//for( int istn = 0; istn < station.size(); istn++ )
+//	//	for( int its = 0; its < station[istn].ts.size(); its++ )
+//	//		station[istn].ts[its].combination[0].fcDistribution[0].print();
+//
+//	// set corrections to be used
+//	fc.set_corrections( station );
+//
+//	// DO IT - retrieve FCs
+//	for( int istn = 0; istn < station.size(); istn++ )
+//		for( int its = 0; its < station[istn].ts.size(); its++ )
+//			for( int icomb = 0; icomb < station[istn].ts[its].combination.size(); icomb++ ) {
+//				// cout << istn << " " << its << " " << icomb << endl;
+//				fc.extract_fcs_for_each_combination( station, istn, its, icomb );
+//				
+//
+//				//// checkouts
+//				//for( int ifreq = 0; ifreq < station[istn].ts[its].combination[icomb].fr.size(); ifreq++ ) 
+//				//for( int i = 500; i < 505; i++ ) {	
+//				//	// in
+//				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].in[0]( i, 1 ) << " ";
+//				//	// inRR
+//				//	
+//				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].inRR[0]( i, 1 ) << " ";
+//				//	// out
+//				//	
+//				//	cout << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 0 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 1 ) << " " << station[istn].ts[its].combination[icomb].fr[ifreq].out[0]( i, 2 ) << endl;
+//				//	cout << endl << endl;
+//				//}
+//			}
+//
+//	// free memory
+//	fc.deallocate_memory_for_ch_fc( station );
+//}
 
 //void Extract_FCs_FixedWindowLength::get_in( std::vector<StationBase> &station, const size_t iStnIn, const size_t iTsIn, const size_t iComb, const size_t idxSeg  )
 //{
@@ -801,6 +845,9 @@ matCUDA::Array<int> Extract_FCs_FixedWindowLength::get_fc_distribution( size_t m
 		fcDistribution(irow,1) = static_cast<int>( this->auxFcDistribution[0](iLines,0)*changeFactor + 0.5 );
 		fcDistribution(irow,2) = static_cast<int>( this->auxFcDistribution[0](iLines,1)*changeFactor + 0.5 );
 	}
+
+	fcDistribution.print();
+	fcDistribution.write2file("teste.txt");
 
 	return fcDistribution;
 }

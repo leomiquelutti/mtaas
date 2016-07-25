@@ -6,6 +6,9 @@
 #include <iostream>
 #include <fstream>
 
+#include "boost/date_time/posix_time/posix_time.hpp" //include all types plus i/o
+#include "boost/date_time/gregorian/gregorian.hpp"
+
 class Extract_FCs_FixedWindowLength;
 class Extract_FCs_VariableWindowLength;
 class Evaluate_Z_LS;
@@ -148,7 +151,7 @@ void StationBase::get_all_FCs( std::vector<StationBase> &station, TS_TO_FFT_TYPE
 	switch(ts2fft_type) 
 	{
 	case FIXED_WINDOW_LENGTH:
-		Extract_FCs_FixedWindowLength::get_all_FCs( station );
+		Extract_FCs_FixedWindowLength::Extract_FCs_FixedWindowLength( station );
 	case VARIABLE_WINDOW_LENGTH:
 		Extract_FCs_VariableWindowLength::get_all_FCs( station );
 	}
@@ -206,11 +209,21 @@ void Utils::delete_all( std::vector<StationBase> *station )
 
 void Utils::draft_build_time_vector( std::vector<StationBase> &station )
 {
+	using namespace boost::posix_time;
+	using namespace boost::gregorian;
 	for( int istn = 0; istn < station.size(); istn++ ) {
 		for( int its = 0; its < station[istn].ts.size(); its++ ) {
-			station[istn].ts[its].timeVector = new Array<int>(1,2);
+			station[istn].ts[its].timeVector = new Array<int>(1,3);
+
+			std::string aux( station[istn].ts[its].date.getDateStr() );
+			cout << aux << endl;
+			ptime t(time_from_string( aux ));
+			cout << t << endl;
+			cout << t.date() << endl;
+
 			station[istn].ts[its].timeVector[0](0,0) = 0;
 			station[istn].ts[its].timeVector[0](0,1) = station[istn].ts[its].ch[0].timeSeries->getDim(0) - 1;
+			//station[istn].ts[its].timeVector[0](0,2) = t.date();
 		}
 	}
 }
