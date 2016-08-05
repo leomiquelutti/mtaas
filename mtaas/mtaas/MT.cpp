@@ -105,6 +105,20 @@ FrequencyResponses& FrequencyResponses::operator = (const FrequencyResponses& el
 	return *this;
 }
 
+Date& Date::operator = (const Date& element)
+{
+	this->startYear = element.startYear;
+	this->startMonth = element.startMonth;
+	this->startDay = element.startDay;
+	this->startHour = element.startHour;
+	this->startMinute = element.startMinute;
+	this->startSecond = element.startSecond;
+	this->tsTime = element.tsTime;
+	this->tsTimeDuration = element.tsTimeDuration;
+
+	return *this;
+}
+
 std::string Date::getDateStr()
 {
 	return std::to_string(startYear) + "-"

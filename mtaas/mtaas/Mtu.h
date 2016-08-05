@@ -132,13 +132,14 @@ private:
 	static int		read_value( char *pos );
 	void			finish_channel_details( std::vector<Channel> &ch  );
 	void			read_cts_file( std::vector<Channel> &ch );
-	table					read_tbl();
-	void					read_mtu_data( StationFile &ts  );
-	StationFile				get_parameters( StationFile ts );
-	//matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
-	//static bool		correct_types(void);
-	//static void		fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
+	table			read_tbl();
+	void			read_mtu_data( StationFile &ts  );
+	StationFile		get_parameters( StationFile ts );
+	void			get_mtu_time_vector( StationFile &ts );
+	//void			fill_time_vector( matCUDA::Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector );
 	//static INT2		bswap_16(INT2 datum);	
+	//static bool		correct_types(void);
+	//matCUDA::Array<double>	get_mtu_time_vector( StationBase *station, std::string input );
 };
 
 #endif // MTU_H

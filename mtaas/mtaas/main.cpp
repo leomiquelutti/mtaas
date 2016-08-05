@@ -21,8 +21,8 @@ int main()
 	TS_TO_FFT_TYPE ts2fft_type = FIXED_WINDOW_LENGTH;
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;
 	RR_OR_SS_TYPE rrorss_type = SINGLE_SITE;
-	std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu ss";
-	//std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu";
+	//std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu ss";
+	std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu";
 
 	// object to explore the main path and its subfolders
 	DirectoryProperties dirInfo( inputPath );

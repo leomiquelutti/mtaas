@@ -12,6 +12,8 @@
 #include <sstream>
 #include <boost\iostreams\device\array.hpp>
 #include <boost/exception/all.hpp>
+//#include <boost/date_time/posix_time/posix_time.hpp>
+//#include <boost/date_time/gregorian/gregorian.hpp>
 
 using namespace std;
 using namespace matCUDA;
@@ -46,6 +48,9 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 
 		// get some parameters
 		auxTs = station->ts[i].mtu.get_parameters( auxTs );
+
+		// read raw time-series
+		station->ts[i].mtu.read_mtu_data( auxTs );
 
 		// read raw time-series
 		station->ts[i].mtu.read_mtu_data( auxTs );
@@ -91,6 +96,7 @@ void ExtractorMTU::read_mtu_data( StationFile &ts  )
 	ts.mtu.numberOfRecords = ts.mtu.numberOfBytes / ts.mtu.recordLength;
 	ts.mtu.numberOfSamples = ts.mtu.numberOfBytes / ts.mtu.recordLength * ts.mtu.nScansPerRecord;
 
+	/*
 	// allocate time-series memory
 	std::vector<Channel> auxCh(ts.nChannels);
 	for( int i = 0; i < auxCh.size(); i++ )
@@ -113,11 +119,94 @@ void ExtractorMTU::read_mtu_data( StationFile &ts  )
 	}
 	else
 		cout << "Could not open " << input << endl << endl;
+	*/
+
+	// get mtu time vector
+	this->get_mtu_time_vector( auxTs );
+	ts.pTimeVector = auxTs.pTimeVector;
+	ts.timeVector = auxTs.timeVector;
 	
 	// finishes filling channel details, as gain, orientation, count conversion, etc
-	this->finish_channel_details( auxCh );
+	//this->finish_channel_details( auxCh );
 
-	ts.ch = auxCh;
+	//ts.ch = auxCh;
+}
+
+void ExtractorMTU::get_mtu_time_vector( StationFile &ts )
+{
+	using namespace boost::posix_time;
+	using namespace boost::gregorian;
+
+	vector< int > auxTimeMatrix( 2 );
+	vector< ptime > auxPTimeMatrix( 1 );
+
+	vector< int > timeMatrix;
+	vector< ptime > pTimeMatrix;
+
+	// to compare both 
+	StationFile auxTsInitial, auxTsFinal, auxTsBase;
+	bool isContinuous = 0;
+	size_t nPoints = 0;
+
+	ifstream infile( this->tsnFile.c_str(), ios::binary );
+	if ( infile.good() )
+    {
+		size_t counter = 0, position = 0;
+		while (infile.good() && counter < ts.mtu.numberOfRecords )
+		{
+			// get time info in auxTsFinal
+			read_TSn_tag( infile, &auxTsFinal, position );
+
+			// initialize the boost::posix_time::ptime variable
+			auxTsFinal.date.tsTime = ptime(date(auxTsFinal.date.startYear,auxTsFinal.date.startMonth,auxTsFinal.date.startDay),
+				time_duration(auxTsFinal.date.startHour,auxTsFinal.date.startMinute,auxTsFinal.date.startSecond));
+			
+			// do the stuff of time comparison here
+			if ( counter == 0 ) {
+				auxTsBase = auxTsFinal;
+				nPoints = auxTsFinal.mtu.nScansPerRecord;
+			}
+			else {
+				// compare if blocks are continuous in time
+				isContinuous = auxTsInitial.date.tsTime + seconds( (auxTsInitial.mtu.nScansPerRecord + 1)/auxTsInitial.samplingFrequency ) == auxTsFinal.date.tsTime;
+				if (!isContinuous) 
+				{
+					if ( timeMatrix.size() == 0 ) {
+						timeMatrix.push_back( 0 );
+						timeMatrix.push_back( nPoints );
+					}
+					else {
+						//auxTimeMatrix[0] = timeMatrix[timeMatrix.size() - 1] + 1;
+						//auxTimeMatrix[1] = auxTimeMatrix[0] + nPoints;
+						//timeMatrix.push_back( auxTimeMatrix[0] );
+						//timeMatrix.push_back( auxTimeMatrix[1] );
+						timeMatrix.push_back( timeMatrix[timeMatrix.size() - 1] + 1 );
+						timeMatrix.push_back( auxTimeMatrix[0] + nPoints );
+					}
+					
+					//if ( timeMatrix.size() == 1 )
+
+					nPoints = auxTsFinal.mtu.nScansPerRecord;
+				}
+				else
+				{
+					nPoints += auxTsFinal.mtu.nScansPerRecord;
+				}
+				
+				//cout << nPoints << " " << isContinuous << " " << to_simple_string(auxTsInitial.date.tsTime) << endl;
+				//cout << to_simple_string(auxTsInitial.date.tsTime + seconds( (auxTsInitial.mtu.nScansPerRecord + 1)/auxTsInitial.samplingFrequency )) << endl;
+				//cout << to_simple_string(auxTsFinal.date.tsTime) << endl;
+			}
+
+			auxTsInitial = auxTsFinal;
+
+			counter++;
+			position += auxTsFinal.mtu.recordLength;
+			cout << position << " " << counter << endl;
+		}
+		for( int i = 0; i < timeMatrix.size(); ++i )
+			cout << timeMatrix[i] << endl;
+    }
 }
 
 void ExtractorMTU::read_TSn_first_tag( ifstream &infile, StationFile *ts, size_t position )
@@ -214,6 +303,7 @@ void ExtractorMTU::read_TSn_tag( ifstream &infile, StationFile *ts, size_t posit
 		}
 		ts->samplingFrequency = (size_t)(sampledenom / sampleenum);
 		ts->mtu.recordLength = (int)(ts->mtu.nScansPerRecord * ts->nChannels * ts->mtu.sampleLength + ts->mtu.tagLength);
+		//cout << ts->mtu.nScansPerRecord << " " << ts->mtu.sampleLength << " " << ts->mtu.recordLength << endl;
 	}
     delete[] CurrentTag;
 }
@@ -980,24 +1070,6 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &ch  )
 	}
 }
 
-//void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
-//{
-//	MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
-//	MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
-//
-//	bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
-//	unsigned int val = 0;
-//
-//	if( checkTime == false )
-//	{
-//		boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
-//		val = MtuBase.ts->samplingFrequency*diffInTime.total_seconds();
-//	}
-//
-//	for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
-//		(*timeVector)( i + idxOfTimeVector) = i + val;
-//}
-//
 //Array<double> ExtractorMTU::get_mtu_time_vector( StationBase *station, string input )
 //{
 //	StationBase newMtu = *station;
@@ -1016,7 +1088,7 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &ch  )
 //
 //	return Array<double>(1);
 //}
-//
+
 //bool ExtractorMTU::correct_types(void) {
 //    if(sizeof(INT2)==2 && sizeof(INT4)==4 && sizeof(int8)==8 && sizeof(float8)==8)
 //        return true;
@@ -1041,4 +1113,22 @@ void ExtractorMTU::finish_channel_details( std::vector<Channel> &ch  )
 //
 //INT2 ExtractorMTU::bswap_16(INT2 datum) {
 //    return (((datum & 0xff00) >>  8) | ((datum & 0x00ff) <<  8));
+//}
+
+//void ExtractorMTU::fill_time_vector( Array<double> *timeVector, StationBase MtuBase, StationBase MtuCurrent, size_t idxOfTimeVector )
+//{
+//	MtuBase.date.tsTime = boost::posix_time::time_from_string(MtuBase.date.getDateStr());
+//	MtuCurrent.date.tsTime = boost::posix_time::time_from_string(MtuCurrent.date.getDateStr());
+//
+//	bool checkTime = MtuBase.date.tsTime == MtuCurrent.date.tsTime;
+//	unsigned int val = 0;
+//
+//	if( checkTime == false )
+//	{
+//		boost::posix_time::time_duration diffInTime = MtuCurrent.date.tsTime - MtuBase.date.tsTime;
+//		val = MtuBase.ts->samplingFrequency*diffInTime.total_seconds();
+//	}
+//
+//	for( int i = 0; i < MtuCurrent.mtu->nScansPerRecord; i++ )
+//		(*timeVector)( i + idxOfTimeVector) = i + val;
 //}

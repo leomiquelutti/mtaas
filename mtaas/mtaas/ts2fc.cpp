@@ -847,7 +847,7 @@ matCUDA::Array<int> Extract_FCs_FixedWindowLength::get_fc_distribution( size_t m
 	}
 
 	fcDistribution.print();
-	fcDistribution.write2file("teste.txt");
+	//fcDistribution.write2file("teste.txt");
 
 	return fcDistribution;
 }

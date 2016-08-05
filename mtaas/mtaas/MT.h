@@ -89,6 +89,13 @@ typedef enum {
 class Date
 {
 public:
+	
+	//Date() {};
+	//~Date() {};
+
+	//Date(const Date& element) {*this = element;};
+    Date& operator = (const Date& element);
+
 	int startYear;
 	int startMonth;
 	int startDay;
@@ -96,6 +103,7 @@ public:
 	int startMinute;
 	int startSecond;	
 	boost::posix_time::ptime tsTime;
+	boost::posix_time::time_duration *tsTimeDuration;
 
 	std::string getDateStr();
 };
