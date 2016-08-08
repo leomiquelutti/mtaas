@@ -44,6 +44,7 @@ StationFile& StationFile::operator = (const StationFile& element)
 	this->numberOfCombinations = element.numberOfCombinations;
 	this->samplingFrequency = element.samplingFrequency;
 	this->timeVector = element.timeVector;
+	this->pTimeVector = element.pTimeVector;
 
 	return *this;
 }
@@ -203,13 +204,21 @@ void Combination::define_combinations_for_ss( std::vector<StationBase> &station 
 			station[istn].ts[its].combination[0].idxStn[0] = istn;
 			station[istn].ts[its].combination[0].idxTs[0] = its;
 
+			//station[istn].ts[its].combination[0].idxBgn = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
+			//station[istn].ts[its].combination[0].idxBgn[0](0,0) = station[istn].ts[its].timeVector[0](0,0);
+			//station[istn].ts[its].combination[0].idxBgn[0](0,1) = station[istn].ts[its].timeVector[0](0,0);
+
+			//station[istn].ts[its].combination[0].idxEnd = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
+			//station[istn].ts[its].combination[0].idxEnd[0](0,0) = station[istn].ts[its].timeVector[0](0,1);
+			//station[istn].ts[its].combination[0].idxEnd[0](0,1) = station[istn].ts[its].timeVector[0](0,1);
+
 			station[istn].ts[its].combination[0].idxBgn = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
-			station[istn].ts[its].combination[0].idxBgn[0](0,0) = station[istn].ts[its].timeVector[0](0,0);
-			station[istn].ts[its].combination[0].idxBgn[0](0,1) = station[istn].ts[its].timeVector[0](0,0);
+			station[istn].ts[its].combination[0].idxBgn[0](0,0) = station[istn].ts[its].timeVector[0];
+			station[istn].ts[its].combination[0].idxBgn[0](0,1) = station[istn].ts[its].timeVector[1];
 
 			station[istn].ts[its].combination[0].idxEnd = new Array<int>( 1, auxRRConc.nConcomitantTs + 1 );
-			station[istn].ts[its].combination[0].idxEnd[0](0,0) = station[istn].ts[its].timeVector[0](0,1);
-			station[istn].ts[its].combination[0].idxEnd[0](0,1) = station[istn].ts[its].timeVector[0](0,1);
+			station[istn].ts[its].combination[0].idxEnd[0](0,0) = station[istn].ts[its].timeVector[0];
+			station[istn].ts[its].combination[0].idxEnd[0](0,1) = station[istn].ts[its].timeVector[1];
 		}
 	}
 }
@@ -223,23 +232,23 @@ void Utils::delete_all( std::vector<StationBase> *station )
 
 void Utils::draft_build_time_vector( std::vector<StationBase> &station )
 {
-	using namespace boost::posix_time;
-	using namespace boost::gregorian;
-	for( int istn = 0; istn < station.size(); istn++ ) {
-		for( int its = 0; its < station[istn].ts.size(); its++ ) {
-			station[istn].ts[its].timeVector = new Array<int>(1,3);
+	//using namespace boost::posix_time;
+	//using namespace boost::gregorian;
+	//for( int istn = 0; istn < station.size(); istn++ ) {
+	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {
+	//		station[istn].ts[its].timeVector = new Array<int>(1,3);
 
-			std::string aux( station[istn].ts[its].date.getDateStr() );
-			cout << aux << endl;
-			ptime t(time_from_string( aux ));
-			cout << t << endl;
-			cout << t.date() << endl;
+	//		std::string aux( station[istn].ts[its].date.getDateStr() );
+	//		cout << aux << endl;
+	//		ptime t(time_from_string( aux ));
+	//		cout << t << endl;
+	//		cout << t.date() << endl;
 
-			station[istn].ts[its].timeVector[0](0,0) = 0;
-			station[istn].ts[its].timeVector[0](0,1) = station[istn].ts[its].ch[0].timeSeries->getDim(0) - 1;
-			//station[istn].ts[its].timeVector[0](0,2) = t.date();
-		}
-	}
+	//		station[istn].ts[its].timeVector[0](0,0) = 0;
+	//		station[istn].ts[its].timeVector[0](0,1) = station[istn].ts[its].ch[0].timeSeries->getDim(0) - 1;
+	//		//station[istn].ts[its].timeVector[0](0,2) = t.date();
+	//	}
+	//}
 }
 
 WriteOutputs::WriteOutputs( std::vector<StationBase> &station )

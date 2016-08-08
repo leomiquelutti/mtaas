@@ -254,7 +254,7 @@ public:
 	size_t						nChannels;
 	size_t						numberOfCombinations;
 	double						samplingFrequency;
-	matCUDA::Array<int>			*timeVector;
+	std::vector< int >			timeVector;
 	std::vector<boost::posix_time::ptime>	pTimeVector;
 
 	// functions

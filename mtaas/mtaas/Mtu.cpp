@@ -52,11 +52,16 @@ void ExtractorMTU::read_time_series( StationBase *station, DirectoryProperties *
 		// read raw time-series
 		station->ts[i].mtu.read_mtu_data( auxTs );
 
-		// read raw time-series
-		station->ts[i].mtu.read_mtu_data( auxTs );
+			//cout << auxTs.timeVector[0] << " "
+			//	<< auxTs.timeVector[1] << " "
+			//	<< auxTs.pTimeVector[0] << endl;
 
 		// stores all results in station->ts[i]
 		station->ts[i] = auxTs;
+
+			//cout << station->ts[i].timeVector[0] << " "
+			//	<< station->ts[i].timeVector[1] << " "
+			//	<< station->ts[i].pTimeVector[0] << endl;
 	}
 }
 
@@ -95,8 +100,7 @@ void ExtractorMTU::read_mtu_data( StationFile &ts  )
 	ts.mtu.numberOfBytes = get_number_of_bytes( input );
 	ts.mtu.numberOfRecords = ts.mtu.numberOfBytes / ts.mtu.recordLength;
 	ts.mtu.numberOfSamples = ts.mtu.numberOfBytes / ts.mtu.recordLength * ts.mtu.nScansPerRecord;
-
-	/*
+	
 	// allocate time-series memory
 	std::vector<Channel> auxCh(ts.nChannels);
 	for( int i = 0; i < auxCh.size(); i++ )
@@ -118,27 +122,21 @@ void ExtractorMTU::read_mtu_data( StationFile &ts  )
 		infile.close();
 	}
 	else
-		cout << "Could not open " << input << endl << endl;
-	*/
+		cout << "Could not open " << input << endl << endl;	
 
 	// get mtu time vector
-	this->get_mtu_time_vector( auxTs );
-	ts.pTimeVector = auxTs.pTimeVector;
-	ts.timeVector = auxTs.timeVector;
+	this->get_mtu_time_vector( ts );
 	
 	// finishes filling channel details, as gain, orientation, count conversion, etc
-	//this->finish_channel_details( auxCh );
+	this->finish_channel_details( auxCh );
 
-	//ts.ch = auxCh;
+	ts.ch = auxCh;
 }
 
 void ExtractorMTU::get_mtu_time_vector( StationFile &ts )
 {
 	using namespace boost::posix_time;
 	using namespace boost::gregorian;
-
-	vector< int > auxTimeMatrix( 2 );
-	vector< ptime > auxPTimeMatrix( 1 );
 
 	vector< int > timeMatrix;
 	vector< ptime > pTimeMatrix;
@@ -147,12 +145,12 @@ void ExtractorMTU::get_mtu_time_vector( StationFile &ts )
 	StationFile auxTsInitial, auxTsFinal, auxTsBase;
 	bool isContinuous = 0;
 	size_t nPoints = 0;
-
+		
 	ifstream infile( this->tsnFile.c_str(), ios::binary );
 	if ( infile.good() )
     {
 		size_t counter = 0, position = 0;
-		while (infile.good() && counter < ts.mtu.numberOfRecords )
+		while (infile.good() && counter < this->numberOfRecords )
 		{
 			// get time info in auxTsFinal
 			read_TSn_tag( infile, &auxTsFinal, position );
@@ -173,40 +171,46 @@ void ExtractorMTU::get_mtu_time_vector( StationFile &ts )
 				{
 					if ( timeMatrix.size() == 0 ) {
 						timeMatrix.push_back( 0 );
-						timeMatrix.push_back( nPoints );
+						timeMatrix.push_back( nPoints - 1 );
 					}
 					else {
-						//auxTimeMatrix[0] = timeMatrix[timeMatrix.size() - 1] + 1;
-						//auxTimeMatrix[1] = auxTimeMatrix[0] + nPoints;
-						//timeMatrix.push_back( auxTimeMatrix[0] );
-						//timeMatrix.push_back( auxTimeMatrix[1] );
 						timeMatrix.push_back( timeMatrix[timeMatrix.size() - 1] + 1 );
-						timeMatrix.push_back( auxTimeMatrix[0] + nPoints );
-					}
-					
-					//if ( timeMatrix.size() == 1 )
+						timeMatrix.push_back( timeMatrix[timeMatrix.size() - 1] + nPoints - 1 );
+					}					
 
+					pTimeMatrix.push_back( ptime(date(auxTsBase.date.startYear,auxTsBase.date.startMonth,auxTsBase.date.startDay),
+						time_duration(auxTsBase.date.startHour,auxTsBase.date.startMinute,auxTsBase.date.startSecond)) );
+
+					auxTsBase = auxTsFinal;
 					nPoints = auxTsFinal.mtu.nScansPerRecord;
 				}
 				else
-				{
-					nPoints += auxTsFinal.mtu.nScansPerRecord;
-				}
-				
-				//cout << nPoints << " " << isContinuous << " " << to_simple_string(auxTsInitial.date.tsTime) << endl;
-				//cout << to_simple_string(auxTsInitial.date.tsTime + seconds( (auxTsInitial.mtu.nScansPerRecord + 1)/auxTsInitial.samplingFrequency )) << endl;
-				//cout << to_simple_string(auxTsFinal.date.tsTime) << endl;
+					nPoints += auxTsFinal.mtu.nScansPerRecord;				
 			}
 
 			auxTsInitial = auxTsFinal;
 
 			counter++;
 			position += auxTsFinal.mtu.recordLength;
-			cout << position << " " << counter << endl;
 		}
-		for( int i = 0; i < timeMatrix.size(); ++i )
-			cout << timeMatrix[i] << endl;
+
+		// fills in last timeMatrix and pTimeMatrix value
+		if ( timeMatrix.size() == 0 ) {
+			timeMatrix.push_back( 0 );
+			timeMatrix.push_back( nPoints - 1 );
+		}
+		else {
+			timeMatrix.push_back( timeMatrix[timeMatrix.size() - 1] + 1 );
+			timeMatrix.push_back( timeMatrix[timeMatrix.size() - 1] + nPoints - 1 );
+		}
+		pTimeMatrix.push_back( ptime(date(auxTsBase.date.startYear,auxTsBase.date.startMonth,auxTsBase.date.startDay),
+			time_duration(auxTsBase.date.startHour,auxTsBase.date.startMinute,auxTsBase.date.startSecond)) );
     }
+	cout << timeMatrix[0] << endl;
+	cout << timeMatrix[1] << endl;
+	cout << pTimeMatrix[0] << endl;
+	ts.timeVector = timeMatrix;
+	ts.pTimeVector = pTimeMatrix;
 }
 
 void ExtractorMTU::read_TSn_first_tag( ifstream &infile, StationFile *ts, size_t position )

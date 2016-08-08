@@ -22,7 +22,8 @@ int main()
 	ESTIMATOR_TYPE estimator_type = LEAST_SQUARES;
 	RR_OR_SS_TYPE rrorss_type = SINGLE_SITE;
 	//std::string inputPath = "C:\\Users\\Usuario\\Google Drive\\Documentos\\MT data\\mtu ss";
-	std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu";
+	std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu ss";
+	//std::string inputPath = "C:\\Users\\leonardo\\Google Drive\\Documentos\\MT data\\mtu ts5";
 
 	// object to explore the main path and its subfolders
 	DirectoryProperties dirInfo( inputPath );
@@ -37,24 +38,28 @@ int main()
 
 	// build the draft for the time vector, considering all continuous acquisition
 	// TODO - do it correctly
-	Utils::draft_build_time_vector( station );
+	//Utils::draft_build_time_vector( station );
 
-	//// checkouts
-	//for( int istn = 0; istn < station.size(); istn++ ) {
-	//	for( int its = 0; its < station[istn].ts.size(); its++ ) {		
-	//		//station[istn].ts[its].timeVector[0].print();
-	//		//std::cout << endl << istn << " " << its << endl;
-	//		for( int irow = 0; irow < station[istn].ts[its].ch[0].systemResponseFreqs[0].getDim(0); irow++ ) {
-	//			//std::cout << station[istn].ts[its].ch[0].systemResponseFreqs[0](irow) << " ";
-	//			for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )	{
-	//				station[istn].ts[its].ch[ich].gain = 1;
-	//				std::cout << station[istn].ts[its].ch[ich].gain << " ";
-	//			}
-	//			std::cout << std::endl;
-	//		}
-	//	}
-	//			std::cout << std::endl;
-	//}
+	// checkouts
+	for( int istn = 0; istn < station.size(); istn++ ) {
+		for( int its = 0; its < station[istn].ts.size(); its++ ) {		
+			//station[istn].ts[its].timeVector[0].print();
+			//std::cout << endl << istn << " " << its << endl;
+			//for( int irow = 0; irow < station[istn].ts[its].ch[0].systemResponseFreqs[0].getDim(0); irow++ ) {
+			//	//std::cout << station[istn].ts[its].ch[0].systemResponseFreqs[0](irow) << " ";
+			//	for( int ich = 0; ich < station[istn].ts[its].ch.size(); ich++ )	{
+			//		station[istn].ts[its].ch[ich].gain = 1;
+			//		std::cout << station[istn].ts[its].ch[ich].gain << " ";
+			//	}
+			//	std::cout << std::endl;
+			//}
+
+			cout << station[istn].ts[its].timeVector[station[istn].ts[its].timeVector.size() - 2] << " "
+				<< station[istn].ts[its].timeVector[station[istn].ts[its].timeVector.size() - 1] << " "
+				<< station[istn].ts[its].pTimeVector[station[istn].ts[its].pTimeVector.size() - 1] << endl;
+		}
+				std::cout << std::endl;
+	}
 
 	// extract corrected (to physical units) Fourier coefficients 
 	StationBase::get_all_FCs( station, ts2fft_type, rrorss_type );
@@ -83,8 +88,6 @@ int main()
 	//		}
 
 	WriteOutputs::WriteOutputs( station );
-
-
 
 	// delete everything allocated
 	// TODO
